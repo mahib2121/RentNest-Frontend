@@ -9,25 +9,40 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { LogOut, Settings, User } from "lucide-react";
+import {
+  Building2,
+  Home,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  User,
+} from "lucide-react";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
 import { Button } from "../ui/button";
 import { logout } from "@/service/logout";
 
-// Navigation items configuration
+// Navigation items
 const navItems = [
-  { label: "Home", href: "/" },
-  { label: "About", href: "/about" },
-  { label: "Services", href: "/services" },
-  { label: "Contact", href: "/contact" },
-];
-
-// User menu items configuration
-const userMenuItems = [
-  { label: "Profile", icon: User, action: "profile" },
-  { label: "Settings", icon: Settings, action: "settings" },
+  {
+    label: "Home",
+    href: "/",
+  },
+  {
+    label: "Properties",
+    href: "/properties",
+  },
+  {
+    label: "About",
+    href: "/about",
+  },
+  {
+    label: "Contact",
+    href: "/contact",
+  },
 ];
 
 type IUser = {
@@ -60,87 +75,140 @@ type NavbarProps = {
 
 export function Navbar({ user }: NavbarProps) {
   const router = useRouter();
-  const handleUserMenuAction = async (action: string) => {
-    if (action === "logout") {
+
+  const handleLogout = async () => {
+    try {
       await logout();
-      toast.success("User Logged Out Successfully!");
+
+      toast.success("Logged out successfully!");
+
       router.push("/login");
+      router.refresh();
+    } catch {
+      toast.error("Failed to logout. Please try again.");
     }
   };
 
+  const currentUser = user.data?.profile;
+
   return (
-    <nav className="border-b border-border">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="shrink-0">
-            <span className="text-2xl font-bold text-primary">
-              NextJs Press
+          <Link href="/" className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+              <Home className="h-5 w-5 text-primary-foreground" />
+            </div>
+
+            <span className="text-xl font-bold tracking-tight">
+              Rent<span className="text-primary">Nest</span>
             </span>
           </Link>
 
-          {/* Nav Links */}
-          <div className="hidden md:absolute md:left-1/2 md:transform md:-translate-x-1/2 md:flex md:items-center md:gap-8">
+          {/* Desktop Navigation */}
+          <div className="hidden items-center gap-8 md:flex">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-foreground hover:text-primary transition-colors text-sm font-medium"
+                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
               >
                 {item.label}
               </Link>
             ))}
           </div>
 
-          {/* User Dropdown */}
-          {user.success ? (
+          {/* Right Side */}
+          {user.success && currentUser ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <div className="cursor-pointer">
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="w-4 h-4 text-primary" />
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-full outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                >
+                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary/10">
+                    {currentUser.profile?.profilePhoto ? (
+                      <img
+                        src={currentUser.profile.profilePhoto}
+                        alt={currentUser.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <User className="h-5 w-5 text-primary" />
+                    )}
                   </div>
-                </div>
+                </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+
+              <DropdownMenuContent align="end" className="w-64">
+                {/* User Information */}
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col gap-1">
-                    <p className="text-sm font-medium">
-                      {user.data?.profile.name}
+                    <p className="text-sm font-semibold">{currentUser.name}</p>
+
+                    <p className="truncate text-xs text-muted-foreground">
+                      {currentUser.email}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {user.data?.profile.email}
-                    </p>
+
+                    <div className="mt-1 flex items-center gap-1">
+                      <Building2 className="h-3 w-3 text-primary" />
+
+                      <span className="text-xs capitalize text-primary">
+                        {currentUser.role.toLowerCase()}
+                      </span>
+                    </div>
                   </div>
                 </DropdownMenuLabel>
+
                 <DropdownMenuSeparator />
-                {userMenuItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <DropdownMenuItem
-                      key={item.action}
-                      onClick={() => handleUserMenuAction(item.action)}
-                    >
-                      <Icon className="w-4 h-4 mr-2" />
-                      <span>{item.label}</span>
-                    </DropdownMenuItem>
-                  );
-                })}
+
+                {/* Dashboard */}
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard" className="cursor-pointer">
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    <span>Dashboard</span>
+                  </Link>
+                </DropdownMenuItem>
+
+                {/* Profile */}
+                <DropdownMenuItem asChild>
+                  <Link href="/profile" className="cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
+                </DropdownMenuItem>
+
+                {/* Settings */}
+                <DropdownMenuItem asChild>
+                  <Link href="/settings" className="cursor-pointer">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </Link>
+                </DropdownMenuItem>
+
                 <DropdownMenuSeparator />
+
+                {/* Logout */}
                 <DropdownMenuItem
-                  onClick={async () => {
-                    await handleUserMenuAction("logout");
-                  }}
+                  onClick={handleLogout}
+                  className="cursor-pointer text-destructive focus:text-destructive"
                 >
-                  <LogOut className="w-4 h-4 mr-2" />
+                  <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link href={"/login"}>
-              <Button className="cursor-pointer">Login</Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" asChild>
+                <Link href="/login">Login</Link>
+              </Button>
+
+              <Button asChild>
+                <Link href="/register">Get Started</Link>
+              </Button>
+            </div>
           )}
         </div>
       </div>
