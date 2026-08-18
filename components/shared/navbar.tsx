@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -79,9 +80,7 @@ export function Navbar({ user }: NavbarProps) {
   const handleLogout = async () => {
     try {
       await logout();
-
       toast.success("Logged out successfully!");
-
       router.push("/login");
       router.refresh();
     } catch {
@@ -129,9 +128,11 @@ export function Navbar({ user }: NavbarProps) {
                 >
                   <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary/10">
                     {currentUser.profile?.profilePhoto ? (
-                      <img
+                      <Image
                         src={currentUser.profile.profilePhoto}
                         alt={currentUser.name}
+                        width={36}
+                        height={36}
                         className="h-full w-full object-cover"
                       />
                     ) : (
@@ -160,7 +161,6 @@ export function Navbar({ user }: NavbarProps) {
                     </div>
                   </div>
                 </DropdownMenuLabel>
-
                 <DropdownMenuSeparator />
 
                 {/* Dashboard */}
