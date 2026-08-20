@@ -85,7 +85,7 @@ const DashboardSidebar = ({ role }: DashboardSidebarProps) => {
 
   const adminLinks = [
     {
-      href: "/dashboard/users",
+      href: "/admin-dashboard/users",
       icon: Users,
       label: "Users",
     },
