@@ -90,19 +90,14 @@ const DashboardSidebar = ({ role }: DashboardSidebarProps) => {
       label: "Users",
     },
     {
-      href: "/dashboard/properties",
+      href: "/admin-dashboard/properties",
       icon: Building2,
       label: "Properties",
     },
     {
-      href: "/dashboard/rental-requests",
+      href: "/admin-dashboard/rental-requests",
       icon: FileText,
       label: "Rental Requests",
-    },
-    {
-      href: "/dashboard/categories",
-      icon: Home,
-      label: "Categories",
     },
   ];
 
