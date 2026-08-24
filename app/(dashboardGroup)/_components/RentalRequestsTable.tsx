@@ -7,8 +7,6 @@ import {
   Clock3,
   MapPin,
 } from "lucide-react";
-
-// Changed Record key to string to prevent Prisma string mismatch errors
 const statusStyles: Record<string, string> = {
   PENDING: "bg-yellow-100 text-yellow-700",
   APPROVED: "bg-green-100 text-green-700",
@@ -21,7 +19,7 @@ export type AdminRentalRequest = {
   moveInDate: string;
   durationMonths: number;
   message?: string | null;
-  status: string; // Changed to string to match database output
+  status: string;
   createdAt: string;
   updatedAt: string;
   property: {
@@ -67,8 +65,8 @@ const RentalRequestsTable = ({
 
       {/* Table */}
       <div className="overflow-x-auto">
-        {/* Fixed Tailwind class: min-w-1100px -> min-w-[1100px] */}
-        <table className="w-full min-w-[1100px]">
+        {/* Fixed Tailwind class: min-w-1100px -> min-w-275 */}
+        <table className="w-full min-w-275">
           <thead className="border-b bg-muted/40">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
