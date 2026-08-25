@@ -24,18 +24,18 @@ type DashboardSidebarProps = {
 const DashboardSidebar = ({ role }: DashboardSidebarProps) => {
   const pathname = usePathname();
 
-  const commonLinks = [
-    {
-      href: "/dashboard",
-      icon: LayoutDashboard,
-      label: "Dashboard",
-    },
-    {
-      href: "/dashboard/profile",
-      icon: Settings,
-      label: "Profile",
-    },
-  ];
+  // const commonLinks = [
+  //   {
+  //     href: "/dashboard",
+  //     icon: LayoutDashboard,
+  //     label: "Dashboard",
+  //   },
+  //   {
+  //     href: "/dashboard/profile",
+  //     icon: Settings,
+  //     label: "Profile",
+  //   },
+  // ];
 
   const tenantLinks = [
     {
@@ -62,12 +62,12 @@ const DashboardSidebar = ({ role }: DashboardSidebarProps) => {
 
   const landlordLinks = [
     {
-      href: "/dashboard/properties",
+      href: "/landlord-dashboard/my-properties",
       icon: Building2,
       label: "My Properties",
     },
     {
-      href: "/dashboard/rental-requests",
+      href: "/landlord-dashboard/rental-request",
       icon: FileText,
       label: "Rental Requests",
     },
@@ -116,8 +116,8 @@ const DashboardSidebar = ({ role }: DashboardSidebarProps) => {
         return [];
     }
   };
-
-  const links = [...commonLinks, ...getRoleLinks()];
+  //...commonLinks,
+  const links = [...getRoleLinks()];
 
   return (
     <aside className="hidden w-64 shrink-0 border-r bg-background md:block">

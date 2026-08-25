@@ -1,16 +1,17 @@
-import { Button } from "@/components/ui/button";
-import { getMe } from "@/service/getMe";
+import HeroSection from "./_components/HeroSection";
+import PropertySection from "./_components/PropertySection";
+import FeaturesSection from "./_components/FeaturesSection";
+import CTASection from "./_components/CTASection";
+import Footer from "./_components/Footer";
 
-export default async function HomePage() {
-  console.log("Root Route");
-  const user = await getMe();
-  console.log(user);
+export default function Home() {
   return (
-    <div>
-      Hello, Next.js!
-      <Button size={"xs"} variant={"destructive"}>
-        Click Me
-      </Button>
+    <div className="min-h-screen bg-white">
+      <HeroSection />
+      <PropertySection />
+      <FeaturesSection />
+      <CTASection />
+      <Footer />
     </div>
   );
 }

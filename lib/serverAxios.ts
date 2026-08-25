@@ -10,6 +10,7 @@ export const serverAxios = async () => {
     .join("; ");
 
   return axios.create({
+    //baseURL: "http://localhost:5000/",
     baseURL: process.env.APIurl,
     headers: {
       Cookie: cookieHeader,

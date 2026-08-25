@@ -65,6 +65,7 @@ export const updateUserStatusAction = async (
     throw new Error("Something went wrong");
   }
 };
+
 export const deleteUserAction = async (id: string) => {
   try {
     const api = await serverAxios();
