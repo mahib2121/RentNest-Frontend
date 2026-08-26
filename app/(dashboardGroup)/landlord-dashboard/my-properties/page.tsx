@@ -19,7 +19,7 @@
 
 // export default PropertiesPage;
 
-import MyProperties from "../../_components/mypro";
+
 
 const PropertiesPage = () => {
   return (

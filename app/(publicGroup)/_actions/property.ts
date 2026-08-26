@@ -22,7 +22,6 @@ export async function getFeaturedProperties(): Promise<Property[]> {
         limit: 3,
         featured: true,
         availabilityStatus: "AVAILABLE",
-        
       },
     });
 

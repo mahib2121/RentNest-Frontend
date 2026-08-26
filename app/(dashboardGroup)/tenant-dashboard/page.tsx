@@ -1,8 +1,32 @@
+import { redirect } from "next/navigation";
 
-const UserDashboardPage = () => {
+import { getMe } from "@/service/getMe";
+
+import RentalRequests from "../_components/RentalRequests";
+import { getMyRentalRequests } from "../_actions/tenantRequests";
+
+export default async function TenantDashboardPage() {
+  const user = await getMe();
+
+  if (!user?.success) {
+    redirect("/login");
+  }
+
+  const result = await getMyRentalRequests();
+
   return (
-    <div>UserDashboardPage</div>
-  )
-}
+    <main className="mx-auto max-w-6xl p-6">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">Tenant Dashboard</h1>
 
-export default UserDashboardPage
+        <p className="mt-2 text-gray-600">
+          Manage your rental requests and payments.
+        </p>
+      </div>
+
+      <RentalRequests requests={result.success ? result.data : []} />
+
+      {!result.success && <p className="mt-4 text-red-600">{result.message}</p>}
+    </main>
+  );
+}
