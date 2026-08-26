@@ -163,9 +163,17 @@ export function Navbar({ user }: NavbarProps) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
 
-                {/* Dashboard */}
                 <DropdownMenuItem asChild>
-                  <Link href="/dashboard" className="cursor-pointer">
+                  <Link
+                    href={
+                      currentUser.role === "ADMIN"
+                        ? "/admin-dashboard"
+                        : currentUser.role === "TENANT"
+                          ? "/tenant-dashboard"
+                          : "/landlord-dashboard"
+                    }
+                    className="cursor-pointer"
+                  >
                     <LayoutDashboard className="mr-2 h-4 w-4" />
                     <span>Dashboard</span>
                   </Link>
