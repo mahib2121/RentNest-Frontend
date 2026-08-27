@@ -1,8 +1,9 @@
-import PaymentButton from "@/app/(publicGroup)/_components/PaymentButton";
-import { TenantRentalRequest } from "../_actions/tenantRequests";
+import RentalRequestActions from "./RentalRequestActions";
 
-type RentalRequestsProps = {
-  requests: TenantRentalRequest[];
+import type { LandlordRentalRequest } from "../_actions/rentalRequests";
+
+type Props = {
+  requests: LandlordRentalRequest[];
 };
 
 function formatDate(date: string) {
@@ -13,34 +14,34 @@ function formatDate(date: string) {
   });
 }
 
-export default function RentalRequests({ requests }: RentalRequestsProps) {
+export default function RentalRequests({ requests }: Props) {
   if (requests.length === 0) {
     return (
       <div className="rounded-lg border p-6">
-        <h2 className="text-xl font-semibold">My Rental Requests</h2>
+        <h2 className="text-xl font-semibold">Rental Requests</h2>
 
-        <p className="mt-2 text-gray-600">
-          You have not submitted any rental requests yet.
-        </p>
+        <p className="mt-2 text-gray-600">No rental requests found.</p>
       </div>
     );
   }
 
   return (
     <section>
-      <h2 className="mb-4 text-2xl font-bold">My Rental Requests</h2>
+      <h2 className="mb-6 text-2xl font-bold">Rental Requests</h2>
 
       <div className="space-y-6">
         {requests.map((request) => (
           <div key={request.id} className="rounded-lg border p-6 shadow-sm">
+            {/* Property + Status */}
             <div className="flex flex-col justify-between gap-4 md:flex-row">
               <div>
                 <h3 className="text-xl font-semibold">
-                  {request.property.title}
+                  {request.property?.title ?? "Unknown Property"}
                 </h3>
 
-                <p className="mt-1 text-gray-600">
-                  {request.property.address}, {request.property.city}
+                <p className="mt-1 text-sm text-gray-600">
+                  {request.property?.address ?? "Address unavailable"}
+                  {request.property?.city ? `, ${request.property.city}` : ""}
                 </p>
               </div>
 
@@ -51,63 +52,97 @@ export default function RentalRequests({ requests }: RentalRequestsProps) {
               </div>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
+            {/* Request Details */}
+            <div className="mt-5 grid gap-4 md:grid-cols-4">
+              {/* Tenant */}
               <div>
-                <p className="text-sm text-gray-500">Monthly Rent</p>
+                <p className="text-sm text-gray-500">Tenant</p>
 
-                <p className="font-semibold">৳{request.property.rentPrice}</p>
+                <p className="font-semibold">
+                  {request.tenant?.name ?? "Unknown tenant"}
+                </p>
+
+                <p className="text-sm text-gray-600">
+                  {request.tenant?.email ?? "No email available"}
+                </p>
               </div>
 
+              {/* Move-in Date */}
               <div>
-                <p className="text-sm text-gray-500">Move-in Date</p>
+                <p className="text-sm text-gray-500">Move-in</p>
 
                 <p className="font-semibold">
                   {formatDate(request.moveInDate)}
                 </p>
               </div>
 
+              {/* Duration */}
               <div>
                 <p className="text-sm text-gray-500">Duration</p>
 
                 <p className="font-semibold">{request.durationMonths} months</p>
               </div>
+
+              {/* Rent */}
+              <div>
+                <p className="text-sm text-gray-500">Monthly Rent</p>
+
+                <p className="font-semibold">
+                  ৳{request.property?.rentPrice ?? "0"}
+                </p>
+              </div>
             </div>
 
+            {/* Tenant Message */}
             {request.message && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-500">Message</p>
+              <div className="mt-5">
+                <p className="text-sm text-gray-500">Tenant Message</p>
 
                 <p>{request.message}</p>
               </div>
             )}
 
-            {request.status === "APPROVED" && (
+            {/* Approve / Reject */}
+            {request.status === "PENDING" && (
               <div className="mt-6 border-t pt-5">
-                <p className="mb-3 text-sm text-gray-600">
-                  Your rental request has been approved. Complete payment to
-                  confirm your booking.
-                </p>
-
-                <PaymentButton rentalRequestId={request.id} />
+                <RentalRequestActions requestId={request.id} />
               </div>
             )}
 
-            {request.status === "PENDING" && (
-              <p className="mt-5 text-sm text-gray-600">
-                Waiting for landlord approval.
-              </p>
+            {/* Approved */}
+            {request.status === "APPROVED" && (
+              <div className="mt-6 border-t pt-5">
+                <p className="text-sm text-green-600">
+                  This rental request has been approved.
+                </p>
+              </div>
             )}
 
+            {/* Rejected */}
             {request.status === "REJECTED" && (
-              <p className="mt-5 text-sm text-red-600">
-                Your rental request was rejected.
-              </p>
+              <div className="mt-6 border-t pt-5">
+                <p className="text-sm text-red-600">
+                  This rental request has been rejected.
+                </p>
+              </div>
             )}
 
+            {/* Cancelled */}
             {request.status === "CANCELLED" && (
-              <p className="mt-5 text-sm text-gray-600">
-                This rental request has been cancelled.
-              </p>
+              <div className="mt-6 border-t pt-5">
+                <p className="text-sm text-gray-600">
+                  This rental request has been cancelled.
+                </p>
+              </div>
+            )}
+
+            {/* Confirmed */}
+            {request.status === "CONFIRMED" && (
+              <div className="mt-6 border-t pt-5">
+                <p className="text-sm text-green-600">
+                  This rental request is confirmed.
+                </p>
+              </div>
             )}
           </div>
         ))}
