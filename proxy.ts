@@ -7,6 +7,7 @@ import { getNewAccessToken } from "./service/refreshToken";
 import { jwtUtils } from "./utils/jwt";
 
 const AUTH_ROUTES = ["/login", "/register"];
+
 const PUBLIC_ROUTES = ["/", "/news"];
 
 const ROLE_DASHBOARDS: Record<string, string> = {
@@ -29,9 +30,17 @@ export async function proxy(request: NextRequest) {
   let accessToken = request.cookies.get("accessToken")?.value;
   const refreshToken = request.cookies.get("refreshToken")?.value;
 
+  // --------------------------------------------------
+  // Verify access token
+  // --------------------------------------------------
+
   let decodedAccessToken = accessToken
     ? jwtUtils.verifyToken(accessToken, process.env.JWT_ACCESS_SECRET as string)
     : null;
+
+  // --------------------------------------------------
+  // Verify refresh token
+  // --------------------------------------------------
 
   const decodedRefreshToken = refreshToken
     ? jwtUtils.verifyToken(
@@ -48,16 +57,22 @@ export async function proxy(request: NextRequest) {
     const result = await getNewAccessToken();
 
     if (result.success && result.data?.accessToken) {
-      accessToken = result.data.accessToken;
+      const newAccessToken = result.data.accessToken;
 
-      cookieStore.set("accessToken", accessToken, {
+      // Update local access token
+      accessToken = newAccessToken;
+
+      // Store new access token in cookie
+      cookieStore.set("accessToken", newAccessToken, {
         httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
         maxAge: 60 * 60 * 24,
         sameSite: "lax",
       });
 
+      // Verify the newly generated access token
       decodedAccessToken = jwtUtils.verifyToken(
-        accessToken as string,
+        newAccessToken,
         process.env.JWT_ACCESS_SECRET as string,
       );
     }
@@ -79,6 +94,7 @@ export async function proxy(request: NextRequest) {
 
   if (accessToken && !decodedAccessToken?.success) {
     cookieStore.delete("accessToken");
+
     accessToken = undefined;
     userRole = null;
   }
@@ -129,8 +145,16 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // --------------------------------------------------
+  // Continue request
+  // --------------------------------------------------
+
   return NextResponse.next();
 }
+
+// --------------------------------------------------
+// Proxy matcher
+// --------------------------------------------------
 
 export const config = {
   matcher: ["/((?!api|_next/static|favicon.ico|_next/image|.*\\.png$).*)"],

@@ -5,34 +5,40 @@ import { cookies } from "next/headers";
 export const getMe = async () => {
   const cookieStore = await cookies();
 
-  const accessToken = cookieStore.get("accessToken")?.value || null;
+  const accessToken = cookieStore.get("accessToken")?.value;
 
   if (!accessToken) {
-    // throw new Error("User Not Logged In!");
-
     return {
       success: false,
       message: "User not logged in!",
     };
   }
 
-  const res = await fetch(`${process.env.APIurl}/api/auth/me`, {
-    headers: {
-      // Authorization : accessToken as unknown as string,
-      // Authorization : `${accessToken}`,
-      // Authorization : `Bearer ${accessToken}`
+  try {
+    const res = await fetch(`${process.env.APIurl}/api/auth/me`, {
+      method: "GET",
+      headers: {
+        Cookie: `accessToken=${accessToken}`,
+      },
+      cache: "no-store",
+    });
 
-      Cookie: `accessToken=${accessToken}`,
-    },
+    const result = await res.json();
 
-    cache: "force-cache",
-    next: {
-      revalidate: 60 * 60 * 24, // 1day
-      tags: ["my-profile"],
-    },
-  });
+    if (!res.ok) {
+      return {
+        success: false,
+        message: result.message || "Failed to get user information.",
+      };
+    }
 
-  const result = res.json();
+    return result;
+  } catch (error) {
+    console.error("Failed to get current user:", error);
 
-  return result;
+    return {
+      success: false,
+      message: "Failed to get user information.",
+    };
+  }
 };

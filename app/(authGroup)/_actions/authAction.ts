@@ -5,9 +5,11 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import jwt, { JwtPayload } from "jsonwebtoken";
 
-type LoginResponse = {
+// ==================== LOGIN ====================
+
+export type LoginResponse = {
   success: boolean;
-  statusCode: number;
+  statusCode?: number;
   message: string;
   data?: {
     accessToken: string;
@@ -18,7 +20,7 @@ type LoginResponse = {
 export const loginAction = async (
   prevState: LoginResponse,
   formData: FormData,
-) => {
+): Promise<LoginResponse> => {
   const email = formData.get("email");
   const password = formData.get("password");
 
@@ -38,26 +40,30 @@ export const loginAction = async (
   const result: LoginResponse = await res.json();
 
   if (result.success) {
+    // Make sure tokens exist before setting cookies
     if (!result.data?.accessToken || !result.data?.refreshToken) {
       throw new Error("Authentication tokens are missing");
     }
 
     const cookieStore = await cookies();
 
+    // Access token
     cookieStore.set("accessToken", result.data.accessToken, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
     });
 
+    // Refresh token
     cookieStore.set("refreshToken", result.data.refreshToken, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
       maxAge: 60 * 60 * 24 * 7,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
     });
 
+    // Decode access token to determine user role
     const decodeToken = jwt.decode(
       result.data.accessToken,
     ) as JwtPayload | null;
@@ -66,6 +72,7 @@ export const loginAction = async (
       throw new Error("Invalid access token");
     }
 
+    // Redirect according to role
     if (decodeToken.role === "ADMIN") {
       redirect("/admin-dashboard");
     }
@@ -109,6 +116,7 @@ export const registerAction = async (
     role: formData.get("role"),
   };
 
+  // Validate form data with Zod
   const result = registerSchema.safeParse(data);
 
   if (!result.success) {
@@ -119,8 +127,10 @@ export const registerAction = async (
     };
   }
 
+  // Zod-validated data
   const validatedData = result.data;
 
+  // Send validated data to backend
   const res = await fetch(`${process.env.APIurl}/api/users/register`, {
     method: "POST",
     headers: {

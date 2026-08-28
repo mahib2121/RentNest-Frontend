@@ -1,14 +1,19 @@
 "use client";
+
 import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { loginAction } from "../_actions/authAction";
-const initialState = {
+
+import { loginAction, type LoginResponse } from "../_actions/authAction";
+
+const initialState: LoginResponse = {
   success: false,
   message: "",
 };
+
 const LoginForm = () => {
   const [state, action, pending] = useActionState(loginAction, initialState);
 
