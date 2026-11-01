@@ -5,10 +5,9 @@ import { cookies } from "next/headers";
 export const getNewAccessToken = async () => {
   const cookieStore = await cookies();
 
-  const refreshToken = cookieStore.get("accessToken")?.value || null;
+  const refreshToken = cookieStore.get("refreshToken")?.value || null;
 
   if (!refreshToken) {
-    // throw new Error("User Not Logged In!");
 
     return {
       success: false,

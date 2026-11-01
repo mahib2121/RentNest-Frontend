@@ -40,7 +40,6 @@ export const loginAction = async (
   const result: LoginResponse = await res.json();
 
   if (result.success) {
-    // Make sure tokens exist before setting cookies
     if (!result.data?.accessToken || !result.data?.refreshToken) {
       throw new Error("Authentication tokens are missing");
     }
