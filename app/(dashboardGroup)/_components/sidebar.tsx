@@ -2,12 +2,11 @@
 
 import {
   Building2,
+  ClipboardList,
   CreditCard,
   FileText,
   Home,
   LayoutDashboard,
-  MessageSquare,
-  Settings,
   Star,
   Users,
 } from "lucide-react";
@@ -21,127 +20,92 @@ type DashboardSidebarProps = {
   role: UserRole;
 };
 
+type NavItem = {
+  href: string;
+  icon: typeof Home;
+  label: string;
+};
+
+const tenantLinks: NavItem[] = [
+  { href: "/tenant-dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/properties", icon: Home, label: "Browse properties" },
+  { href: "/tenant-dashboard/my-posts", icon: FileText, label: "My posts" },
+  { href: "/payment", icon: CreditCard, label: "Payments" },
+];
+
+const landlordLinks: NavItem[] = [
+  { href: "/landlord-dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  {
+    href: "/landlord-dashboard/my-properties",
+    icon: Building2,
+    label: "My properties",
+  },
+  {
+    href: "/landlord-dashboard/rental-request",
+    icon: ClipboardList,
+    label: "Rental requests",
+  },
+  { href: "/payment", icon: CreditCard, label: "Payments" },
+];
+
+const adminLinks: NavItem[] = [
+  { href: "/admin-dashboard", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/admin-dashboard/users", icon: Users, label: "Users" },
+  {
+    href: "/admin-dashboard/properties",
+    icon: Building2,
+    label: "Properties",
+  },
+  {
+    href: "/admin-dashboard/rental-requests",
+    icon: ClipboardList,
+    label: "Rental requests",
+  },
+];
+
 const DashboardSidebar = ({ role }: DashboardSidebarProps) => {
   const pathname = usePathname();
 
-  // const commonLinks = [
-  //   {
-  //     href: "/dashboard",
-  //     icon: LayoutDashboard,
-  //     label: "Dashboard",
-  //   },
-  //   {
-  //     href: "/dashboard/profile",
-  //     icon: Settings,
-  //     label: "Profile",
-  //   },
-  // ];
-
-  const tenantLinks = [
-    {
-      href: "/dashboard/properties",
-      icon: Home,
-      label: "Properties",
-    },
-    {
-      href: "/dashboard/rental-requests",
-      icon: FileText,
-      label: "Rental Requests",
-    },
-    {
-      href: "/dashboard/payments",
-      icon: CreditCard,
-      label: "Payments",
-    },
-    {
-      href: "/dashboard/reviews",
-      icon: Star,
-      label: "Reviews",
-    },
-  ];
-
-  const landlordLinks = [
-    {
-      href: "/landlord-dashboard/my-properties",
-      icon: Building2,
-      label: "My Properties",
-    },
-    {
-      href: "/landlord-dashboard/rental-request",
-      icon: FileText,
-      label: "Rental Requests",
-    },
-    {
-      href: "/dashboard/payments",
-      icon: CreditCard,
-      label: "Payments",
-    },
-    {
-      href: "/dashboard/reviews",
-      icon: Star,
-      label: "Reviews",
-    },
-  ];
-
-  const adminLinks = [
-    {
-      href: "/admin-dashboard/users",
-      icon: Users,
-      label: "Users",
-    },
-    {
-      href: "/admin-dashboard/properties",
-      icon: Building2,
-      label: "Properties",
-    },
-    {
-      href: "/admin-dashboard/rental-requests",
-      icon: FileText,
-      label: "Rental Requests",
-    },
-  ];
-
-  const getRoleLinks = () => {
-    switch (role) {
-      case "TENANT":
-        return tenantLinks;
-
-      case "LANDLORD":
-        return landlordLinks;
-
-      case "ADMIN":
-        return adminLinks;
-
-      default:
-        return [];
-    }
-  };
-  //...commonLinks,
-  const links = [...getRoleLinks()];
+  const links =
+    role === "TENANT"
+      ? tenantLinks
+      : role === "LANDLORD"
+        ? landlordLinks
+        : adminLinks;
 
   return (
-    <aside className="hidden w-64 shrink-0 border-r bg-background md:block">
-      <div className="sticky top-0 flex h-[calc(100vh-4rem)] flex-col">
-        <div className="flex-1 space-y-1 p-4">
-          {links.map((link) => (
-            <SidebarLink
-              key={link.href}
-              href={link.href}
-              icon={link.icon}
-              label={link.label}
-              active={
-                pathname === link.href || pathname.startsWith(`${link.href}/`)
-              }
-            />
-          ))}
-        </div>
+    <aside className="hidden w-60 shrink-0 border-r border-line bg-sidebar md:block">
+      <div className="sticky top-14 flex h-[calc(100vh-3.5rem)] flex-col">
+        <nav className="flex-1 overflow-y-auto p-3">
+          <p className="px-3 pb-2 pt-3 font-label text-xs text-muted-foreground">
+            {role === "TENANT"
+              ? "Tenant"
+              : role === "LANDLORD"
+                ? "Landlord"
+                : "Administration"}
+          </p>
 
-        <div className="border-t p-4">
+          <div className="space-y-0.5">
+            {links.map((link) => (
+              <SidebarLink
+                key={link.href}
+                href={link.href}
+                icon={link.icon}
+                label={link.label}
+                active={
+                  pathname === link.href || pathname.startsWith(`${link.href}/`)
+                }
+              />
+            ))}
+          </div>
+        </nav>
+
+        <div className="border-t border-line p-3">
           <SidebarLink
-            href="/dashboard/messages"
-            icon={MessageSquare}
-            label="Messages"
-            active={pathname.startsWith("/dashboard/messages")}
+            href="/tenant-dashboard/profile"
+            icon={Star}
+            label="Profile"
+            active={pathname.startsWith("/tenant-dashboard/profile")}
           />
         </div>
       </div>

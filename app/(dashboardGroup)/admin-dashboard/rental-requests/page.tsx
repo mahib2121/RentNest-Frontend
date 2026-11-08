@@ -7,11 +7,15 @@ const RentalRequestsPage = async () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Rental Requests</h1>
-        <p className="text-muted-foreground">
-          Manage all rental requests from tenants.
+        <h1 className="font-display text-2xl tracking-tight">
+          Rental requests
+        </h1>
+
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Every rental request submitted by tenants.
         </p>
       </div>
+
       <RentalRequestsTable requests={requests} />
     </div>
   );

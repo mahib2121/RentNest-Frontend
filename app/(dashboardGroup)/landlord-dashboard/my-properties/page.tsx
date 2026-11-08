@@ -7,7 +7,7 @@ import { getCategories } from "../_actions.ts/categories";
 
 import PropertiesTable from "../_components/PropertiesTable";
 
-export default async function LandlordDashboardPage() {
+export default async function MyPropertiesPage() {
   const user = await getMe();
 
   if (!user?.success) {
@@ -17,38 +17,41 @@ export default async function LandlordDashboardPage() {
   const propertiesResult = await getMyProperties();
   const categoriesResult = await getCategories();
 
-  // Handle property API failure
   if (!propertiesResult.success) {
     return (
-      <main className="mx-auto max-w-7xl p-6">
+      <main className="mx-auto max-w-5xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold">Landlord Dashboard</h1>
+          <h1 className="font-display text-2xl tracking-tight">
+            My properties
+          </h1>
 
-          <p className="mt-2 text-muted-foreground">
-            Manage your properties and rental requests.
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Manage the listings you have published and the requests they
+            have attracted.
           </p>
         </div>
 
-        <div className="rounded-lg border p-6 text-red-600">
+        <div className="rounded-sm border border-status-rejected/40 bg-status-rejected/10 px-4 py-3 text-sm text-status-rejected">
           {propertiesResult.message}
         </div>
       </main>
     );
   }
 
-  // Categories are needed for Add Property
-  // If category API fails, use an empty array.
   const properties = propertiesResult.data;
 
   const categories = categoriesResult.success ? categoriesResult.data : [];
 
   return (
-    <main className="mx-auto max-w-7xl p-6">
+    <main className="mx-auto max-w-5xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold">Landlord Dashboard</h1>
+        <h1 className="font-display text-2xl tracking-tight">
+          My properties
+        </h1>
 
-        <p className="mt-2 text-muted-foreground">
-          Manage your properties and rental requests.
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Manage the listings you have published and the requests they
+          have attracted.
         </p>
       </div>
 

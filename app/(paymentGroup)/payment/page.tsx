@@ -1,47 +1,37 @@
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { Check } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 export default function PaymentSuccessPage() {
   return (
-    <main className="flex min-h-[70vh] items-center justify-center p-6">
-      <Card className="w-full max-w-md border-border/60 text-center shadow-lg">
-        <CardHeader className="flex flex-col items-center gap-4 pt-8">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-            <CheckCircle2 className="h-8 w-8 text-green-600" />
+    <main className="flex flex-1 items-start justify-center px-4 py-16 sm:py-24">
+      <div className="w-full max-w-[26rem]">
+        <div className="border border-line bg-card p-6">
+          <div className="flex items-center gap-3 border-b border-line pb-4">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-status-approved/40 text-status-approved">
+              <Check className="h-4 w-4" />
+            </span>
+
+            <h1 className="font-display text-xl tracking-tight">
+              Payment received
+            </h1>
           </div>
 
-          <div className="space-y-2">
-            <CardTitle className="text-3xl font-bold tracking-tight">
-              Payment Successful
-            </CardTitle>
-            <CardDescription className="text-base text-muted-foreground">
-              Your payment has been submitted successfully.
-            </CardDescription>
-          </div>
-        </CardHeader>
-
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Your booking will be confirmed after the payment is verified.
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+            Your payment was submitted. The booking is confirmed once the
+            landlord verifies it — you can follow it from your dashboard.
           </p>
-        </CardContent>
 
-        <CardFooter className="flex justify-center pb-8 pt-4">
-          <Button asChild size="lg" className="w-full sm:w-auto">
-            <Link href="/tenant-dashboard">Go to Dashboard</Link>
-          </Button>
-        </CardFooter>
-      </Card>
+          <div className="mt-6 border-t border-line pt-4">
+            <Button asChild className="w-full">
+              <Link href="/tenant-dashboard">
+                Go to dashboard
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }

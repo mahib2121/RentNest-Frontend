@@ -40,3 +40,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# agent tooling
+/.puku-cli/
+/.agents/
+
+# chrome profiles used by the measurement scripts
+/.cache/
+perf-reports
+scripts
+skills-lock.json

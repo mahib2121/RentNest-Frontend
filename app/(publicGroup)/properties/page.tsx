@@ -1,109 +1,221 @@
 import Link from "next/link";
-type Property = {
-  id: string;
-  title: string;
-  description: string;
-  rentPrice: string;
-  bedrooms: number;
-  bathrooms: number;
-  areaSqft: number;
-  address: string;
-  city: string;
-  division: string;
-  postalCode: string;
-  availableFrom: string;
-  availabilityStatus: string;
-  category: {
-    id: string;
-    name: string;
-  };
-};
+import { connection } from "next/server";
 
-type PropertiesResponse = {
-  success: boolean;
-  statusCode: number;
-  message: string;
-  meta: {
-    page: number;
-    limit: number;
-    total: number;
-  };
-  data: Property[];
-};
+import { getAllProperties } from "../_actions/property";
+import { PropertyCard } from "../_components/PropertyCard";
+import PropertyFilters from "./_components/PropertyFilters";
+import { PropertiesTable } from "./_components/PropertiesTable";
+import SortSelect from "./_components/SortSelect";
+import ViewToggle from "./_components/ViewToggle";
 
-async function getProperties(): Promise<Property[]> {
-  const response = await fetch(`${process.env.APIurl}/api/properties`, {
-    cache: "no-store",
-  });
+type SortKey =
+  | "title"
+  | "rentPrice"
+  | "bedrooms"
+  | "bathrooms"
+  | "areaSqft"
+  | "city";
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch properties");
-  }
+type View = "cards" | "table";
 
-  const result: PropertiesResponse = await response.json();
+type SearchParams = Promise<
+  Record<string, string | string[] | undefined>
+>;
 
-  return result.data;
+function readParam(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+) {
+  const value = params[key];
+
+  return Array.isArray(value) ? value[0] : value;
 }
 
-export default async function PropertiesPage() {
-  const properties = await getProperties();
+export default async function PropertiesPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
+  /**
+   * This page has to render per request: the view (cards or table), the sort
+   * order and the filters all live in the query string. Prerendering it
+   * would bake one set of those choices into the cached HTML, so every
+   * visitor would get the build-time view regardless of what they asked for.
+   *
+   * The listing data itself is still cached — only the shell is dynamic.
+   */
+  await connection();
+
+  const params = await searchParams;
+
+  const city = readParam(params, "city") ?? "";
+  const category = readParam(params, "category") ?? "";
+  const beds = readParam(params, "beds") ?? "";
+  const maxRent = readParam(params, "maxRent") ?? "";
+  const sort = (readParam(params, "sort") ?? "rentPrice") as SortKey;
+  const view = (readParam(params, "view") ?? "cards") as View;
+
+  // Keep the sort selection when switching layout, and drop the sort when the
+  // cards are showing — the grid carries its own order.
+  const activeQuery = new URLSearchParams();
+
+  if (city) activeQuery.set("city", city);
+  if (category) activeQuery.set("category", category);
+  if (beds) activeQuery.set("beds", beds);
+  if (maxRent) activeQuery.set("maxRent", maxRent);
+  if (view === "table") activeQuery.set("sort", sort);
+
+  const all = await getAllProperties();
+
+  const cities = Array.from(
+    new Set(all.map((property) => property.city).filter(Boolean)),
+  ).sort();
+
+  const categories = Array.from(
+    new Set(
+      all
+        .map((property) => property.category?.name)
+        .filter((name): name is string => Boolean(name)),
+    ),
+  ).sort();
+
+  // Filter
+  let rows = all.filter((property) => {
+    if (city && property.city !== city) {
+      return false;
+    }
+
+    if (
+      category &&
+      property.category?.name !== category
+    ) {
+      return false;
+    }
+
+    if (beds && property.bedrooms < Number(beds)) {
+      return false;
+    }
+
+    if (maxRent && Number(property.rentPrice) > Number(maxRent)) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Sort. A `-desc` suffix flips the order.
+  const sorters: Record<string, (a: typeof rows[number], b: typeof rows[number]) => number> = {
+    title: (a, b) => a.title.localeCompare(b.title),
+    rentPrice: (a, b) => Number(a.rentPrice) - Number(b.rentPrice),
+    bedrooms: (a, b) => a.bedrooms - b.bedrooms,
+    bathrooms: (a, b) => a.bathrooms - b.bathrooms,
+    areaSqft: (a, b) => a.areaSqft - b.areaSqft,
+    city: (a, b) => (a.city ?? "").localeCompare(b.city ?? ""),
+  };
+
+  const descending = sort.endsWith("-desc");
+  const sortKey = sort.replace(/-desc$/, "") as SortKey;
+  const sorter = sorters[sortKey] ?? sorters.rentPrice;
+
+  rows = [...rows].sort((a, b) =>
+    descending ? sorter(b, a) : sorter(a, b),
+  );
 
   return (
-    <main className="p-6">
-      <h1 className="mb-6 text-3xl font-bold">Available Properties</h1>
+    <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mb-8 border-b border-line pb-4">
+        <h1 className="font-display text-2xl tracking-tight">
+          Properties for rent
+        </h1>
 
-      {properties.length === 0 ? (
-        <p>No properties available.</p>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {properties.map((property) => (
-            <div key={property.id} className="rounded-lg border p-5 shadow-sm">
-              <h2 className="mb-2 text-xl font-semibold">{property.title}</h2>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Every listing in Dhaka, with rent, size and location side by side.
+        </p>
+      </div>
 
-              <p className="mb-3 text-sm text-gray-600">
-                {property.description}
-              </p>
+      <div className="grid gap-8 lg:grid-cols-[240px_1fr]">
+        {/* Filter rail — the inputs read their initial values from the
+            query string, so a URL change is enough to keep them in sync.
+            Remounting on every change would throw away the user's typing. */}
+        <aside className="lg:sticky lg:top-[4.25rem] lg:self-start">
+          <PropertyFilters
+            cities={cities}
+            categories={categories}
+            values={{
+              city,
+              category,
+              beds,
+              maxRent,
+            }}
+          />
+        </aside>
 
-              <div className="space-y-1 text-sm">
-                <p>
-                  <strong>Rent:</strong> ৳{property.rentPrice}
-                </p>
+        {/* Results */}
+        <section>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="font-numeric text-sm text-muted-foreground">
+              {rows.length}{" "}
+              {rows.length === 1 ? "listing" : "listings"}
+            </p>
 
-                <p>
-                  <strong>Bedrooms:</strong> {property.bedrooms}
-                </p>
+            <div className="flex items-center gap-3">
+              {view === "cards" ? (
+                <SortSelect
+                  value={sort}
+                  query={activeQuery.toString()}
+                />
+              ) : null}
 
-                <p>
-                  <strong>Bathrooms:</strong> {property.bathrooms}
-                </p>
+              <ViewToggle
+                view={view}
+                query={activeQuery.toString()}
+              />
 
-                <p>
-                  <strong>Area:</strong> {property.areaSqft} sqft
-                </p>
-
-                <p>
-                  <strong>Location:</strong> {property.address}, {property.city}
-                </p>
-
-                <p>
-                  <strong>Category:</strong> {property.category.name}
-                </p>
-
-                <p>
-                  <strong>Status:</strong> {property.availabilityStatus}
-                </p>
-              </div>
-
-              <Link
-                href={`/properties/${property.id}`}
-                className="mt-4 inline-block rounded bg-black px-4 py-2 text-white"
-              >
-                View Property
-              </Link>
+              {(city || category || beds || maxRent) && (
+                <Link
+                  href={
+                    view === "table"
+                      ? "/properties?view=table"
+                      : "/properties"
+                  }
+                  className="text-sm text-primary underline-offset-4 hover:underline"
+                >
+                  Clear filters
+                </Link>
+              )}
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+
+          {rows.length === 0 ? (
+            <div className="border border-line px-6 py-14 text-center">
+              <h2 className="font-display text-lg">
+                No listings match those filters
+              </h2>
+
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                Widen the rent range or clear a filter to see more.
+              </p>
+            </div>
+          ) : view === "cards" ? (
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              {rows.map((property, index) => (
+                <PropertyCard
+                  key={property.id}
+                  property={property}
+                  priority={index < 3}
+                />
+              ))}
+            </div>
+          ) : (
+            <PropertiesTable
+              rows={rows}
+              sortKey={sortKey}
+              descending={descending}
+              filters={{ city, category, beds, maxRent, view }}
+            />
+          )}
+        </section>
+      </div>
     </main>
   );
 }

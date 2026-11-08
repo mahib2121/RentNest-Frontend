@@ -14,13 +14,14 @@ const SidebarLink = ({ href, icon: Icon, label, active }: SidebarLinkProps) => {
   return (
     <Link
       href={href}
-      className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+      aria-current={active ? "page" : undefined}
+      className={`flex items-center gap-2.5 rounded-sm px-3 py-2 text-sm transition-colors duration-150 ease-out ${
         active
-          ? "bg-primary text-primary-foreground shadow-sm"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          ? "marker-active bg-secondary font-medium text-foreground"
+          : "text-muted-foreground hover:bg-secondary/60 hover:text-foreground"
       }`}
     >
-      <Icon className="h-5 w-5 shrink-0" />
+      <Icon className="h-4 w-4 shrink-0" />
       <span>{label}</span>
     </Link>
   );

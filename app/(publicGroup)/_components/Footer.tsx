@@ -3,33 +3,37 @@ import { Home } from "lucide-react";
 
 export default function Footer() {
   return (
-    <footer className="border-t border-border bg-white">
+    <footer className="border-t-2 border-ink bg-paper-raised">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-10 md:grid-cols-4">
           {/* Brand */}
           <div>
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Home className="h-5 w-5" />
-              </div>
+            <Link
+              href="/"
+              className="flex items-center gap-2 font-display text-lg tracking-tight"
+            >
+              <Home className="h-4 w-4 text-primary" />
 
-              <span className="text-xl font-bold">RentNest</span>
+              <span>RentNest</span>
             </Link>
 
-            <p className="mt-4 max-w-xs text-sm leading-6 text-muted-foreground">
-              A simple and trusted platform for finding and managing rental
-              properties.
+            <p className="mt-3 max-w-xs text-sm leading-relaxed text-muted-foreground">
+              A rental platform for Dhaka. Browse listings, apply, and pay
+              from one place.
             </p>
           </div>
 
           {/* Platform */}
           <div>
-            <h3 className="font-semibold">Platform</h3>
+            <h3 className="font-label text-sm">Platform</h3>
 
-            <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>
-                <Link href="/browse" className="hover:text-foreground">
-                  Browse Properties
+                <Link
+                  href="/properties"
+                  className="hover:text-foreground"
+                >
+                  Browse properties
                 </Link>
               </li>
 
@@ -38,19 +42,19 @@ export default function Footer() {
                   href="/register?role=landlord"
                   className="hover:text-foreground"
                 >
-                  List a Property
+                  List a property
                 </Link>
               </li>
 
               <li>
                 <Link href="/login" className="hover:text-foreground">
-                  Sign In
+                  Sign in
                 </Link>
               </li>
 
               <li>
                 <Link href="/register" className="hover:text-foreground">
-                  Create Account
+                  Create account
                 </Link>
               </li>
             </ul>
@@ -58,24 +62,24 @@ export default function Footer() {
 
           {/* Support */}
           <div>
-            <h3 className="font-semibold">Support</h3>
+            <h3 className="font-label text-sm">Support</h3>
 
-            <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link href="/help" className="hover:text-foreground">
-                  Help Center
+                  Help center
                 </Link>
               </li>
 
               <li>
                 <Link href="/contact" className="hover:text-foreground">
-                  Contact Us
+                  Contact us
                 </Link>
               </li>
 
               <li>
                 <Link href="/report" className="hover:text-foreground">
-                  Report a Problem
+                  Report a problem
                 </Link>
               </li>
             </ul>
@@ -83,33 +87,36 @@ export default function Footer() {
 
           {/* Legal */}
           <div>
-            <h3 className="font-semibold">Legal</h3>
+            <h3 className="font-label text-sm">Legal</h3>
 
-            <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link href="/privacy" className="hover:text-foreground">
-                  Privacy Policy
+                  Privacy policy
                 </Link>
               </li>
 
               <li>
                 <Link href="/terms" className="hover:text-foreground">
-                  Terms of Service
+                  Terms of service
                 </Link>
               </li>
 
               <li>
-                <Link href="/rental-policy" className="hover:text-foreground">
-                  Rental Policy
+                <Link
+                  href="/rental-policy"
+                  className="hover:text-foreground"
+                >
+                  Rental policy
                 </Link>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="mt-10 border-t pt-6">
-          <p className="text-center text-sm text-muted-foreground">
-            © 2026 RentNest. All rights reserved.
+        <div className="mt-10 border-t border-line pt-5">
+          <p className="font-numeric text-xs text-muted-foreground">
+            © 2026 RentNest
           </p>
         </div>
       </div>

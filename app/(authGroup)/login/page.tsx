@@ -4,27 +4,27 @@ import LoginForm from "../_components/LoginForm";
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-lg">
-        <div className="mb-8 text-center">
-          <h1 className="text-2xl font-bold text-gray-900">RentNest</h1>
+    <main className="flex flex-1 items-start justify-center px-4 py-16 sm:py-24">
+      <div className="w-full max-w-[24rem]">
+        <div className="border border-line bg-card p-6">
+          <h1 className="font-display text-xl tracking-tight">
+            Sign in
+          </h1>
 
-          <h2 className="mt-4 text-3xl font-bold text-gray-900">
-            Welcome Back
-          </h2>
-
-          <p className="mt-2 text-sm text-gray-500">
-            Sign in to your RentNest account
+          <p className="mt-1 text-sm text-muted-foreground">
+            Access your requests, listings, and payments.
           </p>
+
+          <div className="mt-6">
+            <LoginForm />
+          </div>
         </div>
 
-        <LoginForm />
-
-        <p className="mt-6 text-center text-sm text-gray-500">
-          Dont have an account?{" "}
+        <p className="mt-4 text-sm text-muted-foreground">
+          No account yet?{" "}
           <Link
             href="/register"
-            className="font-medium text-primary hover:underline"
+            className="text-primary underline-offset-4 hover:underline"
           >
             Create one
           </Link>

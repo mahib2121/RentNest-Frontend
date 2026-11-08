@@ -1,64 +1,19 @@
-"use client";
-
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-
-import {
-  Building2,
-  Home,
-  LayoutDashboard,
-  LogOut,
-  Settings,
-  User,
-} from "lucide-react";
-
 import Link from "next/link";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 import { Button } from "../ui/button";
-import { logout } from "@/service/logout";
+import { AccountMenuLazy } from "./account-menu-lazy";
 
-// Navigation items
-const navItems = [
-  {
-    label: "Home",
-    href: "/",
-  },
-  {
-    label: "Properties",
-    href: "/properties",
-  },
-  {
-    label: "About",
-    href: "/about",
-  },
-  {
-    label: "Contact",
-    href: "/contact",
-  },
-];
-
-type IUser = {
+export type NavUser = {
   success: boolean;
   message: string;
-  data: {
-    profile: {
+  data?: {
+    profile?: {
       id: string;
       name: string;
       email: string;
       activeStatus: string;
       role: string;
-      createdAt: string;
-      updatedAt: string;
-      profile: {
+      profile?: {
         id: string;
         profilePhoto: string;
         bio: string | null;
@@ -70,151 +25,89 @@ type IUser = {
   };
 };
 
-type NavbarProps = {
-  user: IUser;
-};
+const navItems = [
+  {
+    label: "Properties",
+    href: "/properties",
+  },
+  {
+    label: "How it works",
+    href: "/#how-it-works",
+  },
+];
 
-export function Navbar({ user }: NavbarProps) {
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      toast.success("Logged out successfully!");
-      router.push("/login");
-      router.refresh();
-    } catch {
-      toast.error("Failed to logout. Please try again.");
-    }
-  };
-
+/**
+ * The navbar is a server component.
+ *
+ * The account dropdown is the only part that needs the browser, so it is
+ * split into its own client module. A signed-out visitor — the marketing
+ * traffic — never downloads the radix dropdown, the Slot primitive, or the
+ * toast runtime, because those only arrive with the signed-in branch.
+ */
+export function Navbar({ user }: { user: NavUser }) {
   const currentUser = user.data?.profile;
 
-  return (
-    <nav className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-              <Home className="h-5 w-5 text-primary-foreground" />
-            </div>
+  const isSignedIn = Boolean(user.success && currentUser);
 
-            <span className="text-xl font-bold tracking-tight">
+  const dashboardHref =
+    currentUser?.role === "ADMIN"
+      ? "/admin-dashboard"
+      : currentUser?.role === "TENANT"
+        ? "/tenant-dashboard"
+        : "/landlord-dashboard";
+
+  return (
+    <nav className="sticky top-0 z-50 border-b border-line bg-background/95 backdrop-blur">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="flex h-14 items-center justify-between gap-6">
+          {/* Wordmark */}
+          <Link
+            href="/"
+            className="flex items-center gap-2 font-display text-lg tracking-tight"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 16 16"
+              className="h-4 w-4 fill-primary"
+            >
+              <path d="M8 1.2 1.4 6.6a1 1 0 0 0 .65 1.76H3v5.14A1.5 1.5 0 0 0 4.5 15h7a1.5 1.5 0 0 0 1.5-1.5V8.36h.95a1 1 0 0 0 .65-1.76L8 1.2Z" />
+            </svg>
+
+            <span>
               Rent<span className="text-primary">Nest</span>
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden items-center gap-8 md:flex">
+          {/* Desktop navigation */}
+          <div className="hidden items-center gap-7 md:flex">
             {navItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+                className="text-sm text-muted-foreground transition-colors duration-150 ease-out hover:text-foreground"
               >
                 {item.label}
               </Link>
             ))}
           </div>
 
-          {/* Right Side */}
-          {user.success && currentUser ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="flex items-center gap-2 rounded-full outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                >
-                  <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-primary/10">
-                    {currentUser.profile?.profilePhoto ? (
-                      <Image
-                        src={currentUser.profile.profilePhoto}
-                        alt={currentUser.name}
-                        width={36}
-                        height={36}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <User className="h-5 w-5 text-primary" />
-                    )}
-                  </div>
-                </button>
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent align="end" className="w-64">
-                {/* User Information */}
-                <DropdownMenuLabel className="font-normal">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-sm font-semibold">{currentUser.name}</p>
-
-                    <p className="truncate text-xs text-muted-foreground">
-                      {currentUser.email}
-                    </p>
-
-                    <div className="mt-1 flex items-center gap-1">
-                      <Building2 className="h-3 w-3 text-primary" />
-
-                      <span className="text-xs capitalize text-primary">
-                        {currentUser.role.toLowerCase()}
-                      </span>
-                    </div>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem asChild>
-                  <Link
-                    href={
-                      currentUser.role === "ADMIN"
-                        ? "/admin-dashboard"
-                        : currentUser.role === "TENANT"
-                          ? "/tenant-dashboard"
-                          : "/landlord-dashboard"
-                    }
-                    className="cursor-pointer"
-                  >
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    <span>Dashboard</span>
-                  </Link>
-                </DropdownMenuItem>
-
-                {/* Profile */}
-                <DropdownMenuItem asChild>
-                  <Link href="/profile" className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-
-                {/* Settings */}
-                <DropdownMenuItem asChild>
-                  <Link href="/settings" className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </Link>
-                </DropdownMenuItem>
-
-                <DropdownMenuSeparator />
-
-                {/* Logout */}
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          {/* Right side */}
+          {isSignedIn && currentUser ? (
+            <AccountMenuLazy
+              name={currentUser.name}
+              email={currentUser.email}
+              role={currentUser.role}
+              photo={currentUser.profile?.profilePhoto ?? null}
+              dashboardHref={dashboardHref}
+            />
           ) : (
             <div className="flex items-center gap-2">
               <Button variant="ghost" asChild>
-                <Link href="/login">Login</Link>
+                <Link href="/login">Sign in</Link>
               </Button>
 
               <Button asChild>
-                <Link href="/register">Get Started</Link>
+                <Link href="/register">Create account</Link>
               </Button>
             </div>
           )}

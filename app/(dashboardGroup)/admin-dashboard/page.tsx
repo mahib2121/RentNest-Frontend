@@ -5,12 +5,16 @@ const AdminDashboardPage = async () => {
   const dashboardStats = await getAdminDashboard();
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-muted/30 px-4 py-6 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-7xl">
-        <div className="rounded-2xl border border-border/60 bg-background p-5 shadow-sm sm:p-6 lg:p-8">
-          <AdminDashboard stats={dashboardStats} />
-        </div>
+    <main className="mx-auto w-full max-w-4xl">
+      <div className="mb-8">
+        <h1 className="font-display text-2xl tracking-tight">Admin dashboard</h1>
+
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Activity across the RentNest platform.
+        </p>
       </div>
+
+      <AdminDashboard stats={dashboardStats} />
     </main>
   );
 };

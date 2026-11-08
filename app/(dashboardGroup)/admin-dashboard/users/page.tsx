@@ -8,14 +8,17 @@ export default async function UserManagementPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Users</h1>
-        <p className="text-muted-foreground">Manage all RentNest users.</p>
+        <h1 className="font-display text-2xl tracking-tight">Users</h1>
+
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Every account registered on RentNest.
+        </p>
       </div>
 
-      {/* TODO: Remove this warning block once the Delete API is implemented */}
-      <div className="flex w-fit items-center gap-2 rounded-md bg-yellow-50 px-3 py-2 text-sm text-yellow-800 border border-yellow-200">
+      {/* TODO: Remove this notice once the Delete User API is implemented */}
+      <div className="flex w-fit items-center gap-2 rounded-sm border border-status-pending/40 bg-status-pending/10 px-3 py-2 text-sm text-status-pending">
         <AlertCircle className="h-4 w-4" />
-        <p>The Delete User API is not built yet.</p>
+        <p>Deleting a user is not supported by the API yet.</p>
       </div>
 
       <UsersTable initialUsers={users} />

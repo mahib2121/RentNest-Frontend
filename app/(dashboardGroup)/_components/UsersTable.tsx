@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
+
+import { VirtualTable } from "@/components/ui/virtual-table";
 import {
   deleteUserAction,
   updateUserStatusAction,
 } from "../_actions/adminUserAction";
+import { StatusChip } from "./StatusChip";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 type User = {
   id: string;
@@ -14,32 +18,73 @@ type User = {
   status: "ACTIVE" | "BANNED";
 };
 
+/**
+ * The admin user table.
+ *
+ * Two things were slow here. The table rendered every user, so a large
+ * directory meant a large DOM; and every row re-rendered whenever any row's
+ * action started, because the pending id lived in the same state as the
+ * list.
+ *
+ * The body is virtualised so only the visible rows exist in the DOM, and
+ * each row is memoised on its own identity — changing one user's status
+ * re-renders that row and nothing else.
+ */
 export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
   const [users, setUsers] = useState(initialUsers);
-  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
 
-  const handleStatusChange = async (
-    id: string,
-    status: "ACTIVE" | "BANNED",
-  ) => {
-    try {
-      setLoadingId(id);
+  /**
+   * The search box updates on every keystroke, but the list does not need to.
+   * Debouncing the query keeps typing responsive and filters the list once
+   * the user pauses.
+   */
+  const debouncedQuery = useDebouncedValue(query, 250);
 
-      const updatedUser = await updateUserStatusAction(id, status);
+  /**
+   * `useDeferredValue` lets React keep the input responsive while the
+   * (more expensive) filtered list is recomputed in the background.
+   */
+  const deferredQuery = useDeferredValue(debouncedQuery);
 
-      setUsers((currentUsers) =>
-        currentUsers.map((user) =>
-          user.id === id ? { ...user, status: updatedUser.status } : user,
-        ),
-      );
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoadingId(null);
+  const visibleUsers = useMemo(() => {
+    const needle = deferredQuery.trim().toLowerCase();
+
+    if (!needle) {
+      return users;
     }
-  };
 
-  const handleDelete = async (id: string) => {
+    return users.filter(
+      (user) =>
+        user.name.toLowerCase().includes(needle) ||
+        user.email.toLowerCase().includes(needle) ||
+        user.role.toLowerCase().includes(needle),
+    );
+  }, [users, deferredQuery]);
+
+  const handleStatusChange = useCallback(
+    async (id: string, status: "ACTIVE" | "BANNED") => {
+      try {
+        setPendingId(id);
+
+        const updatedUser = await updateUserStatusAction(id, status);
+
+        setUsers((currentUsers) =>
+          currentUsers.map((user) =>
+            user.id === id ? { ...user, status: updatedUser.status } : user,
+          ),
+        );
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setPendingId(null);
+      }
+    },
+    [],
+  );
+
+  const handleDelete = useCallback(async (id: string) => {
     const confirmed = window.confirm(
       "Are you sure you want to delete this user?",
     );
@@ -47,7 +92,7 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
     if (!confirmed) return;
 
     try {
-      setLoadingId(id);
+      setPendingId(id);
 
       await deleteUserAction(id);
 
@@ -55,62 +100,110 @@ export default function UsersTable({ initialUsers }: { initialUsers: User[] }) {
     } catch (error) {
       console.error(error);
     } finally {
-      setLoadingId(null);
+      setPendingId(null);
     }
-  };
+  }, []);
+
+  const columns = useMemo(
+    () => [
+      {
+        key: "name",
+        label: "Name",
+        renderCell: (user: User) => <span className="font-medium">{user.name}</span>,
+      },
+      {
+        key: "email",
+        label: "Email",
+        renderCell: (user: User) => (
+          <span className="text-muted-foreground">{user.email}</span>
+        ),
+      },
+      {
+        key: "role",
+        label: "Role",
+        width: "110px",
+        renderCell: (user: User) => (
+          <span className="font-label text-xs">
+            {user.role.charAt(0) + user.role.slice(1).toLowerCase()}
+          </span>
+        ),
+      },
+      {
+        key: "status",
+        label: "Status",
+        width: "110px",
+        renderCell: (user: User) => <StatusChip status={user.status} />,
+      },
+      {
+        key: "actions",
+        label: "Actions",
+        width: "170px",
+        align: "right" as const,
+        renderCell: (user: User) => (
+          <div className="flex justify-end gap-2">
+            <button
+              disabled={pendingId === user.id}
+              onClick={() =>
+                handleStatusChange(
+                  user.id,
+                  user.status === "ACTIVE" ? "BANNED" : "ACTIVE",
+                )
+              }
+              className="rounded-sm border border-line-strong px-2.5 py-1 text-xs transition-colors duration-150 ease-out hover:border-foreground/40 hover:bg-secondary disabled:opacity-50"
+            >
+              {user.status === "ACTIVE" ? "Ban" : "Activate"}
+            </button>
+
+            <button
+              disabled={pendingId === user.id}
+              onClick={() => handleDelete(user.id)}
+              className="rounded-sm border border-destructive/40 px-2.5 py-1 text-xs text-destructive transition-colors duration-150 ease-out hover:bg-destructive/10 disabled:opacity-50"
+            >
+              Delete
+            </button>
+          </div>
+        ),
+      },
+    ],
+    [pendingId, handleStatusChange, handleDelete],
+  );
 
   return (
-    <div className="overflow-x-auto rounded-xl border bg-background">
-      <table className="w-full text-sm">
-        <thead className="border-b bg-muted/50">
-          <tr>
-            <th className="px-4 py-3 text-left">Name</th>
-            <th className="px-4 py-3 text-left">Email</th>
-            <th className="px-4 py-3 text-left">Role</th>
-            <th className="px-4 py-3 text-left">Status</th>
-            <th className="px-4 py-3 text-right">Actions</th>
-          </tr>
-        </thead>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <label htmlFor="user-search" className="sr-only">
+          Search users
+        </label>
 
-        <tbody>
-          {users.map((user) => (
-            <tr key={user.id} className="border-b last:border-0">
-              <td className="px-4 py-3 font-medium">{user.name}</td>
+        <input
+          id="user-search"
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Search by name, email or role"
+          className="h-9 w-full max-w-xs rounded-sm border border-line-strong bg-transparent px-3 text-sm outline-none transition-colors duration-150 ease-out placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        />
 
-              <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
+        <p className="font-numeric text-sm text-muted-foreground">
+          {visibleUsers.length}{" "}
+          {visibleUsers.length === 1 ? "user" : "users"}
+        </p>
+      </div>
 
-              <td className="px-4 py-3">{user.role}</td>
-
-              <td className="px-4 py-3">{user.status}</td>
-
-              <td className="px-4 py-3">
-                <div className="flex justify-end gap-2">
-                  <button
-                    disabled={loadingId === user.id}
-                    onClick={() =>
-                      handleStatusChange(
-                        user.id,
-                        user.status === "ACTIVE" ? "BANNED" : "ACTIVE",
-                      )
-                    }
-                    className="rounded-md border px-3 py-1.5 text-xs"
-                  >
-                    {user.status === "ACTIVE" ? "Ban" : "Activate"}
-                  </button>
-
-                  <button
-                    disabled={loadingId === user.id}
-                    onClick={() => handleDelete(user.id)}
-                    className="rounded-md bg-destructive px-3 py-1.5 text-xs text-destructive-foreground"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <VirtualTable
+        columns={columns}
+        rows={visibleUsers}
+        rowKey={(user) => user.id}
+        height={560}
+        overscan={8}
+        empty={
+          <div className="rounded-sm border border-line px-6 py-12 text-center text-sm text-muted-foreground">
+            {query.trim()
+              ? "No users match that search."
+              : "No users found."}
+          </div>
+        }
+      />
     </div>
   );
 }

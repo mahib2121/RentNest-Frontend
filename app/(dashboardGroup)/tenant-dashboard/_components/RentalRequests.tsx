@@ -1,4 +1,5 @@
 import type { TenantRentalRequest } from "../../_actions/tenantRequests";
+import { StatusChip } from "../../_components/StatusChip";
 import PaymentButton from "./PaymentButton";
 
 type Props = {
@@ -16,156 +17,151 @@ function formatDate(date: string) {
 export default function RentalRequests({ requests }: Props) {
   if (requests.length === 0) {
     return (
-      <div className="rounded-lg border p-6">
-        <h2 className="text-xl font-semibold">Rental Requests</h2>
+      <div className="rounded-lg border border-line bg-card p-6">
+        <h2 className="font-display text-xl">Rental requests</h2>
 
-        <p className="mt-2 text-gray-600">You have no rental requests yet.</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          You have not requested a property yet. Browse the available listings
+          to get started.
+        </p>
       </div>
     );
   }
 
   return (
-    <section>
-      <h2 className="mb-6 text-2xl font-bold">Rental Requests</h2>
+    <section className="space-y-4">
+      <h2 className="font-display text-xl">
+        Rental requests
+        <span className="ml-2 font-numeric text-base text-muted-foreground">
+          {requests.length}
+        </span>
+      </h2>
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         {requests.map((request) => {
           const paymentSuccessful = request.payment?.status === "SUCCESS";
 
           return (
-            <div key={request.id} className="rounded-lg border p-6 shadow-sm">
+            <article
+              key={request.id}
+              className="rounded-lg border border-line bg-card"
+            >
               {/* Property + Status */}
-              <div className="flex flex-col justify-between gap-4 md:flex-row">
+              <div className="flex flex-col justify-between gap-3 border-b border-line px-5 py-4 md:flex-row md:items-start">
                 <div>
-                  <h3 className="text-xl font-semibold">
-                    {request.property?.title ?? "Unknown Property"}
+                  <h3 className="font-display text-lg tracking-tight">
+                    {request.property?.title ?? "Unknown property"}
                   </h3>
 
-                  <p className="mt-1 text-sm text-gray-600">
+                  <p className="mt-1 text-sm text-muted-foreground">
                     {request.property?.address ?? "Address unavailable"}
-
                     {request.property?.city ? `, ${request.property.city}` : ""}
                   </p>
                 </div>
 
-                <div>
-                  <span className="rounded border px-3 py-1 text-sm">
-                    {request.status}
-                  </span>
-                </div>
+                <StatusChip status={request.status} />
               </div>
 
-              {/* Details */}
-              <div className="mt-5 grid gap-4 md:grid-cols-3">
+              {/* Details — a ruled fact grid */}
+              <dl className="grid grid-cols-1 gap-x-6 gap-y-4 px-5 py-4 sm:grid-cols-3">
                 <div>
-                  <p className="text-sm text-gray-500">Monthly Rent</p>
+                  <dt className="font-label text-xs text-muted-foreground">
+                    Monthly rent
+                  </dt>
 
-                  <p className="font-semibold">
+                  <dd className="mt-1 font-numeric text-sm">
                     ৳{request.property?.rentPrice ?? "0"}
-                  </p>
+                  </dd>
                 </div>
 
                 <div>
-                  <p className="text-sm text-gray-500">Move-in Date</p>
+                  <dt className="font-label text-xs text-muted-foreground">
+                    Move-in date
+                  </dt>
 
-                  <p className="font-semibold">
+                  <dd className="mt-1 font-numeric text-sm">
                     {formatDate(request.moveInDate)}
-                  </p>
+                  </dd>
                 </div>
 
                 <div>
-                  <p className="text-sm text-gray-500">Duration</p>
+                  <dt className="font-label text-xs text-muted-foreground">
+                    Duration
+                  </dt>
 
-                  <p className="font-semibold">
+                  <dd className="mt-1 font-numeric text-sm">
                     {request.durationMonths} months
-                  </p>
+                  </dd>
                 </div>
-              </div>
+              </dl>
 
               {/* Message */}
               {request.message && (
-                <div className="mt-5">
-                  <p className="text-sm text-gray-500">Your Message</p>
+                <div className="border-t border-line px-5 py-4">
+                  <p className="font-label text-xs text-muted-foreground">
+                    Your message
+                  </p>
 
-                  <p>{request.message}</p>
-                </div>
-              )}
-
-              {/* ========================= */}
-              {/* PAYMENT SUCCESS */}
-              {/* ========================= */}
-
-              {paymentSuccessful && (
-                <div className="mt-6 border-t pt-5">
-                  <div className="rounded-lg border border-green-200 bg-green-50 p-4">
-                    <p className="font-semibold text-green-700">
-                      ✓ Payment Successful
-                    </p>
-
-                    <p className="mt-1 text-sm text-green-600">
-                      Your booking has been confirmed.
-                    </p>
-
-                    {request.payment?.paidAt && (
-                      <p className="mt-2 text-xs text-green-600">
-                        Paid on {formatDate(request.payment.paidAt)}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* ========================= */}
-              {/* PENDING RENTAL REQUEST */}
-              {/* ========================= */}
-
-              {!paymentSuccessful && request.status === "PENDING" && (
-                <div className="mt-6 border-t pt-5">
-                  <p className="text-sm text-yellow-600">
-                    Waiting for landlord approval.
+                  <p className="mt-1.5 text-sm leading-relaxed">
+                    {request.message}
                   </p>
                 </div>
               )}
 
-              {/* ========================= */}
-              {/* APPROVED - PAY NOW */}
-              {/* ========================= */}
+              {/* Payment successful */}
+              {paymentSuccessful && (
+                <div className="border-t border-line px-5 py-4">
+                  <p className="text-sm text-status-approved">
+                    Payment successful. Your booking is confirmed.
+                  </p>
 
+                  {request.payment?.paidAt && (
+                    <p className="mt-1 font-numeric text-xs text-muted-foreground">
+                      Paid on {formatDate(request.payment.paidAt)}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Pending */}
+              {!paymentSuccessful && request.status === "PENDING" && (
+                <div className="border-t border-line px-5 py-4">
+                  <p className="text-sm text-status-pending">
+                    Waiting for the landlord to respond.
+                  </p>
+                </div>
+              )}
+
+              {/* Approved — pay now */}
               {!paymentSuccessful && request.status === "APPROVED" && (
-                <div className="mt-6 border-t pt-5">
-                  <p className="mb-4 text-sm text-green-600">
-                    Your rental request has been approved. Complete payment to
-                    confirm your booking.
+                <div className="border-t border-line px-5 py-4">
+                  <p className="mb-3 text-sm text-status-approved">
+                    Your request was approved. Complete the payment to confirm
+                    your booking.
                   </p>
 
                   <PaymentButton rentalRequestId={request.id} />
                 </div>
               )}
 
-              {/* ========================= */}
-              {/* REJECTED */}
-              {/* ========================= */}
-
+              {/* Rejected */}
               {request.status === "REJECTED" && (
-                <div className="mt-6 border-t pt-5">
-                  <p className="text-sm text-red-600">
-                    Your rental request was rejected by the landlord.
+                <div className="border-t border-line px-5 py-4">
+                  <p className="text-sm text-status-rejected">
+                    The landlord declined this request.
                   </p>
                 </div>
               )}
 
-              {/* ========================= */}
-              {/* CANCELLED */}
-              {/* ========================= */}
-
+              {/* Cancelled */}
               {request.status === "CANCELLED" && (
-                <div className="mt-6 border-t pt-5">
-                  <p className="text-sm text-gray-600">
-                    This rental request has been cancelled.
+                <div className="border-t border-line px-5 py-4">
+                  <p className="text-sm text-muted-foreground">
+                    You cancelled this request.
                   </p>
                 </div>
               )}
-            </div>
+            </article>
           );
         })}
       </div>

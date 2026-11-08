@@ -10,13 +10,15 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-background">
       <Navbar user={user} />
 
       <div className="flex">
         <DashboardSidebar role={profile.role} />
 
-        <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="min-w-0 flex-1 px-5 py-6 sm:px-8 sm:py-8">
+          {children}
+        </main>
       </div>
     </div>
   );

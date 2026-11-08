@@ -1,6 +1,7 @@
 "use server";
 
 import { serverAxios } from "@/lib/serverAxios";
+import { errorMessage, toApiError } from "@/lib/apiError";
 
 export type RentalRequestState = {
   success: boolean;
@@ -26,16 +27,18 @@ export async function createRentalRequest(
       message:
         response.data?.message || "Rental request submitted successfully.",
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error(
       "Create rental request error:",
-      error?.response?.data || error,
+      toApiError(error).response?.data || error,
     );
 
     return {
       success: false,
-      message:
-        error?.response?.data?.message || "Failed to create rental request.",
+      message: errorMessage(
+        error,
+        "Failed to create rental request.",
+      ),
     };
   }
 }

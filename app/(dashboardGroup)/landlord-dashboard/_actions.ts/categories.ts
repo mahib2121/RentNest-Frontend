@@ -1,6 +1,7 @@
 "use server";
 
 import { serverAxios } from "@/lib/serverAxios";
+import { errorMessage, toApiError } from "@/lib/apiError";
 
 export type Category = {
   id: string;
@@ -25,12 +26,15 @@ export async function getCategories(): Promise<CategoriesResponse> {
     const response = await api.get("/api/categories");
 
     return response.data;
-  } catch (error: any) {
-    console.error("Get categories error:", error?.response?.data || error);
+  } catch (error) {
+    console.error(
+      "Get categories error:",
+      toApiError(error).response?.data || error,
+    );
 
     return {
       success: false,
-      message: error?.response?.data?.message || "Failed to load categories.",
+      message: errorMessage(error, "Failed to load categories."),
       data: [],
     };
   }

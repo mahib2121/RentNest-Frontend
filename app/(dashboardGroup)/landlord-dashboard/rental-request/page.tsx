@@ -1,7 +1,40 @@
-import React from "react";
+import { redirect } from "next/navigation";
 
-const page = () => {
-  return <div>mahib renatal request page</div>;
+import { getMe } from "@/service/getMe";
+
+import { getLandlordRentalRequests } from "../../_actions/rentalRequests";
+import RentalRequests from "../../_components/RentalRequests";
+
+const page = async () => {
+  const user = await getMe();
+
+  if (!user?.success) {
+    redirect("/login");
+  }
+
+  const result = await getLandlordRentalRequests();
+
+  return (
+    <main className="mx-auto max-w-4xl">
+      <div className="mb-8 border-b border-line pb-4">
+        <h1 className="font-display text-2xl tracking-tight">
+          Rental requests
+        </h1>
+
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          Tenants who have applied to rent your properties.
+        </p>
+      </div>
+
+      {result.success ? (
+        <RentalRequests requests={result.data} />
+      ) : (
+        <div className="rounded-sm border border-status-rejected/40 bg-status-rejected/10 px-4 py-3 text-sm text-status-rejected">
+          {result.message}
+        </div>
+      )}
+    </main>
+  );
 };
 
 export default page;

@@ -1,6 +1,7 @@
 "use server";
 
 import { serverAxios } from "@/lib/serverAxios";
+import { errorMessage, toApiError } from "@/lib/apiError";
 
 export type CheckoutState = {
   success: boolean;
@@ -23,13 +24,18 @@ export async function createCheckout(
       message: response.data?.message || "Checkout created successfully.",
       paymentUrl: response.data?.data?.paymentUrl,
     };
-  } catch (error: any) {
-    console.error("Create checkout error:", error?.response?.data || error);
+  } catch (error) {
+    console.error(
+      "Create checkout error:",
+      toApiError(error).response?.data || error,
+    );
 
     return {
       success: false,
-      message:
-        error?.response?.data?.message || "Failed to create payment checkout.",
+      message: errorMessage(
+        error,
+        "Failed to create payment checkout.",
+      ),
     };
   }
 }

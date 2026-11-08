@@ -1,8 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 import type { LandlordProperty } from "../_actions.ts/landlordProperties";
 import { updateProperty } from "../_actions.ts/landlordProperties";
@@ -11,65 +24,39 @@ type Props = {
   property: LandlordProperty;
 };
 
-export default function EditPropertyDialog({
-  property,
-}: Props) {
+/**
+ * The dialog for editing a listing.
+ *
+ * Uncontrolled, like the add dialog: the fields hold their values in the
+ * browser and the form reads them with `FormData` on submit. Typing in the
+ * description no longer re-renders twelve inputs and the dialog chrome on
+ * every keystroke.
+ */
+export default function EditPropertyDialog({ property }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const [title, setTitle] = useState(property.title);
-  const [description, setDescription] = useState(
-    property.description,
-  );
+  const formRef = useRef<HTMLFormElement>(null);
 
-  const [rentPrice, setRentPrice] = useState(
-    property.rentPrice,
-  );
-
-  const [bedrooms, setBedrooms] = useState(
-    property.bedrooms,
-  );
-
-  const [bathrooms, setBathrooms] = useState(
-    property.bathrooms,
-  );
-
-  const [areaSqft, setAreaSqft] = useState(
-    property.areaSqft,
-  );
-
-  const [address, setAddress] = useState(
-    property.address,
-  );
-
-  const [city, setCity] = useState(property.city);
-
-  const [division, setDivision] = useState(
-    property.division,
-  );
-
-  const [postalCode, setPostalCode] = useState(
-    property.postalCode,
-  );
-
-  const [latitude, setLatitude] = useState(
-    property.latitude ?? "",
-  );
-
-  const [longitude, setLongitude] = useState(
-    property.longitude ?? "",
-  );
-
-  const [availableFrom, setAvailableFrom] = useState(
-    property.availableFrom
-      ? property.availableFrom.slice(0, 10)
-      : "",
-  );
+  const availableFromDefault = property.availableFrom
+    ? property.availableFrom.slice(0, 10)
+    : "";
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
+
+    const form = formRef.current;
+
+    if (!form) return;
+
+    const data = new FormData(form);
+
+    const postalCode = String(data.get("postalCode") ?? "").trim();
+    const latitude = String(data.get("latitude") ?? "").trim();
+    const longitude = String(data.get("longitude") ?? "").trim();
+    const availableFrom = String(data.get("availableFrom") ?? "");
 
     try {
       setLoading(true);
@@ -77,29 +64,26 @@ export default function EditPropertyDialog({
       const result = await updateProperty(property.id, {
         categoryId: property.categoryId,
 
-        title,
-        description,
+        title: String(data.get("title") ?? ""),
+        description: String(data.get("description") ?? ""),
 
-        rentPrice: Number(rentPrice),
+        rentPrice: Number(data.get("rentPrice")),
 
-        bedrooms: Number(bedrooms),
-        bathrooms: Number(bathrooms),
-        areaSqft: Number(areaSqft),
+        bedrooms: Number(data.get("bedrooms")),
+        bathrooms: Number(data.get("bathrooms")),
+        areaSqft: Number(data.get("areaSqft")),
 
-        address,
-        city,
-        division,
-        postalCode,
+        address: String(data.get("address") ?? ""),
+        city: String(data.get("city") ?? ""),
+        division: String(data.get("division") ?? ""),
+
+        postalCode: postalCode || undefined,
 
         latitude:
-          latitude.trim() !== ""
-            ? Number(latitude)
-            : undefined,
+          latitude.trim() !== "" ? Number(latitude) : undefined,
 
         longitude:
-          longitude.trim() !== ""
-            ? Number(longitude)
-            : undefined,
+          longitude.trim() !== "" ? Number(longitude) : undefined,
 
         availableFrom:
           availableFrom !== ""
@@ -114,22 +98,15 @@ export default function EditPropertyDialog({
         return;
       }
 
-      toast.success(
-        result.message || "Property updated successfully.",
-      );
+      toast.success(result.message || "Property updated.");
 
       setOpen(false);
 
       window.location.reload();
     } catch (error) {
-      console.error(
-        "Update property error:",
-        error,
-      );
+      console.error("Update property error:", error);
 
-      toast.error(
-        "Failed to update property.",
-      );
+      toast.error("Failed to update property.");
     } finally {
       setLoading(false);
     }
@@ -137,327 +114,270 @@ export default function EditPropertyDialog({
 
   return (
     <>
-      {/* Edit Button */}
-
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded border p-2"
+        className="rounded-sm p-2 text-muted-foreground transition-colors duration-150 ease-out hover:bg-secondary hover:text-foreground"
         title="Edit property"
       >
         <Pencil className="h-4 w-4" />
       </button>
 
-      {/* Dialog */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-h-[90vh] gap-0 overflow-y-auto p-0 sm:max-w-2xl">
+          <DialogHeader className="border-b border-line px-6 py-4">
+            <DialogTitle>Edit property</DialogTitle>
 
-      {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-background p-6">
-            {/* Header */}
+            <DialogDescription>
+              Update the listing details for {property.title}.
+            </DialogDescription>
+          </DialogHeader>
 
-            <div className="mb-6">
-              <h2 className="text-xl font-bold">
-                Edit Property
-              </h2>
+          <form
+            ref={formRef}
+            onSubmit={handleSubmit}
+            className="space-y-5 px-6 py-5"
+          >
+            {/* Title */}
+            <div className="space-y-1.5">
+              <Label htmlFor={`title-${property.id}`}>
+                Title
+              </Label>
 
-              <p className="text-sm text-muted-foreground">
-                Update your property information.
+              <Input
+                id={`title-${property.id}`}
+                name="title"
+                defaultValue={property.title}
+                required
+              />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-1.5">
+              <Label htmlFor={`description-${property.id}`}>
+                Description
+              </Label>
+
+              <Textarea
+                id={`description-${property.id}`}
+                name="description"
+                defaultValue={property.description}
+                required
+                rows={4}
+              />
+            </div>
+
+            {/* Rent */}
+            <div className="space-y-1.5">
+              <Label htmlFor={`rentPrice-${property.id}`}>
+                Monthly rent
+              </Label>
+
+              <Input
+                id={`rentPrice-${property.id}`}
+                name="rentPrice"
+                type="number"
+                min={0}
+                defaultValue={property.rentPrice}
+                required
+                className="font-numeric"
+              />
+            </div>
+
+            {/* Bedrooms / Bathrooms / Area */}
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label htmlFor={`bedrooms-${property.id}`}>
+                  Bedrooms
+                </Label>
+
+                <Input
+                  id={`bedrooms-${property.id}`}
+                  name="bedrooms"
+                  type="number"
+                  min={0}
+                  defaultValue={property.bedrooms}
+                  required
+                  className="font-numeric"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor={`bathrooms-${property.id}`}>
+                  Bathrooms
+                </Label>
+
+                <Input
+                  id={`bathrooms-${property.id}`}
+                  name="bathrooms"
+                  type="number"
+                  min={0}
+                  defaultValue={property.bathrooms}
+                  required
+                  className="font-numeric"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor={`areaSqft-${property.id}`}>
+                  Area (sqft)
+                </Label>
+
+                <Input
+                  id={`areaSqft-${property.id}`}
+                  name="areaSqft"
+                  type="number"
+                  min={0}
+                  defaultValue={property.areaSqft}
+                  required
+                  className="font-numeric"
+                />
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="space-y-1.5">
+              <Label htmlFor={`address-${property.id}`}>
+                Address
+              </Label>
+
+              <Input
+                id={`address-${property.id}`}
+                name="address"
+                defaultValue={property.address}
+                required
+              />
+            </div>
+
+            {/* City / Division / Postal */}
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5">
+                <Label htmlFor={`city-${property.id}`}>
+                  City
+                </Label>
+
+                <Input
+                  id={`city-${property.id}`}
+                  name="city"
+                  defaultValue={property.city}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor={`division-${property.id}`}>
+                  Division
+                </Label>
+
+                <Input
+                  id={`division-${property.id}`}
+                  name="division"
+                  defaultValue={property.division}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor={`postalCode-${property.id}`}>
+                  Postal code
+                </Label>
+
+                <Input
+                  id={`postalCode-${property.id}`}
+                  name="postalCode"
+                  defaultValue={property.postalCode}
+                  className="font-numeric"
+                />
+              </div>
+            </div>
+
+            {/* Latitude / Longitude */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor={`latitude-${property.id}`}>
+                  Latitude
+                </Label>
+
+                <Input
+                  id={`latitude-${property.id}`}
+                  name="latitude"
+                  type="number"
+                  step="any"
+                  defaultValue={property.latitude ?? ""}
+                  placeholder="23.8103"
+                  className="font-numeric"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor={`longitude-${property.id}`}>
+                  Longitude
+                </Label>
+
+                <Input
+                  id={`longitude-${property.id}`}
+                  name="longitude"
+                  type="number"
+                  step="any"
+                  defaultValue={property.longitude ?? ""}
+                  placeholder="90.4125"
+                  className="font-numeric"
+                />
+              </div>
+            </div>
+
+            {/* Available From */}
+            <div className="space-y-1.5">
+              <Label htmlFor={`availableFrom-${property.id}`}>
+                Available from
+              </Label>
+
+              <Input
+                id={`availableFrom-${property.id}`}
+                name="availableFrom"
+                type="date"
+                defaultValue={availableFromDefault}
+                required
+                className="font-numeric"
+              />
+            </div>
+
+            {/* Category — read only */}
+            <div className="space-y-1.5">
+              <Label htmlFor={`category-${property.id}`}>
+                Category
+              </Label>
+
+              <Input
+                id={`category-${property.id}`}
+                value={property.category?.name ?? "Not set"}
+                disabled
+                className="bg-secondary/50 text-muted-foreground"
+              />
+
+              <p className="text-xs text-muted-foreground">
+                The category cannot be changed after the listing is
+                created.
               </p>
             </div>
 
-            <form
-              onSubmit={handleSubmit}
-              className="space-y-4"
-            >
-              {/* Title */}
+            <DialogFooter className="border-t border-line pt-5">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setOpen(false)}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
 
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Title
-                </label>
-
-                <input
-                  value={title}
-                  onChange={(e) =>
-                    setTitle(e.target.value)
-                  }
-                  required
-                  className="w-full rounded border px-3 py-2"
-                />
-              </div>
-
-              {/* Description */}
-
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Description
-                </label>
-
-                <textarea
-                  value={description}
-                  onChange={(e) =>
-                    setDescription(e.target.value)
-                  }
-                  required
-                  rows={4}
-                  className="w-full rounded border px-3 py-2"
-                />
-              </div>
-
-              {/* Rent */}
-
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Monthly Rent
-                </label>
-
-                <input
-                  type="number"
-                  value={rentPrice}
-                  onChange={(e) =>
-                    setRentPrice(e.target.value)
-                  }
-                  required
-                  min={0}
-                  className="w-full rounded border px-3 py-2"
-                />
-              </div>
-
-              {/* Bedrooms / Bathrooms / Area */}
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Bedrooms
-                  </label>
-
-                  <input
-                    type="number"
-                    value={bedrooms}
-                    onChange={(e) =>
-                      setBedrooms(
-                        Number(e.target.value),
-                      )
-                    }
-                    required
-                    min={0}
-                    className="w-full rounded border px-3 py-2"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Bathrooms
-                  </label>
-
-                  <input
-                    type="number"
-                    value={bathrooms}
-                    onChange={(e) =>
-                      setBathrooms(
-                        Number(e.target.value),
-                      )
-                    }
-                    required
-                    min={0}
-                    className="w-full rounded border px-3 py-2"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Area (sqft)
-                  </label>
-
-                  <input
-                    type="number"
-                    value={areaSqft}
-                    onChange={(e) =>
-                      setAreaSqft(
-                        Number(e.target.value),
-                      )
-                    }
-                    required
-                    min={0}
-                    className="w-full rounded border px-3 py-2"
-                  />
-                </div>
-              </div>
-
-              {/* Address */}
-
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Address
-                </label>
-
-                <input
-                  value={address}
-                  onChange={(e) =>
-                    setAddress(e.target.value)
-                  }
-                  required
-                  className="w-full rounded border px-3 py-2"
-                />
-              </div>
-
-              {/* City / Division / Postal */}
-
-              <div className="grid gap-4 md:grid-cols-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    City
-                  </label>
-
-                  <input
-                    value={city}
-                    onChange={(e) =>
-                      setCity(e.target.value)
-                    }
-                    required
-                    className="w-full rounded border px-3 py-2"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Division
-                  </label>
-
-                  <input
-                    value={division}
-                    onChange={(e) =>
-                      setDivision(e.target.value)
-                    }
-                    required
-                    className="w-full rounded border px-3 py-2"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Postal Code
-                  </label>
-
-                  <input
-                    value={postalCode}
-                    onChange={(e) =>
-                      setPostalCode(e.target.value)
-                    }
-                    className="w-full rounded border px-3 py-2"
-                  />
-                </div>
-              </div>
-
-              {/* Latitude / Longitude */}
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Latitude
-                  </label>
-
-                  <input
-                    type="number"
-                    step="any"
-                    value={latitude}
-                    onChange={(e) =>
-                      setLatitude(e.target.value)
-                    }
-                    className="w-full rounded border px-3 py-2"
-                    placeholder="23.8103"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Longitude
-                  </label>
-
-                  <input
-                    type="number"
-                    step="any"
-                    value={longitude}
-                    onChange={(e) =>
-                      setLongitude(e.target.value)
-                    }
-                    className="w-full rounded border px-3 py-2"
-                    placeholder="90.4125"
-                  />
-                </div>
-              </div>
-
-              {/* Available From */}
-
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Available From
-                </label>
-
-                <input
-                  type="date"
-                  value={availableFrom}
-                  onChange={(e) =>
-                    setAvailableFrom(
-                      e.target.value,
-                    )
-                  }
-                  required
-                  className="w-full rounded border px-3 py-2"
-                />
-              </div>
-
-              {/* Category */}
-
-              <div>
-                <label className="mb-1 block text-sm font-medium">
-                  Category
-                </label>
-
-                <input
-                  value={
-                    property.category?.name ??
-                    "Unknown"
-                  }
-                  disabled
-                  className="w-full rounded border bg-muted px-3 py-2"
-                />
-
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Current category:{" "}
-                  {property.category?.name ??
-                    "Unknown"}
-                </p>
-              </div>
-
-              {/* Buttons */}
-
-              <div className="flex justify-end gap-3 border-t pt-5">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setOpen(false)
-                  }
-                  disabled={loading}
-                  className="rounded border px-4 py-2"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
-                >
-                  {loading
-                    ? "Updating..."
-                    : "Update Property"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+              <Button type="submit" disabled={loading}>
+                {loading ? "Saving" : "Save changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

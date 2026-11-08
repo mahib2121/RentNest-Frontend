@@ -1,6 +1,7 @@
 "use server";
 
 import { serverAxios } from "@/lib/serverAxios";
+import { errorMessage, toApiError } from "@/lib/apiError";
 
 export type LandlordProperty = {
   id: string;
@@ -61,15 +62,15 @@ export async function getMyProperties(): Promise<PropertiesResponse> {
     const response = await api.get("/api/properties/my-properties");
 
     return response.data;
-  } catch (error: any) {
+  } catch (error) {
     console.error(
       "Get landlord properties error:",
-      error?.response?.data || error,
+      toApiError(error).response?.data || error,
     );
 
     return {
       success: false,
-      message: error?.response?.data?.message || "Failed to load properties.",
+      message: errorMessage(error, "Failed to load properties."),
       data: [],
     };
   }
@@ -89,12 +90,15 @@ export async function deleteProperty(propertyId: string) {
       success: true,
       message: response.data?.message || "Property deleted successfully.",
     };
-  } catch (error: any) {
-    console.error("Delete property error:", error?.response?.data || error);
+  } catch (error) {
+    console.error(
+      "Delete property error:",
+      toApiError(error).response?.data || error,
+    );
 
     return {
       success: false,
-      message: error?.response?.data?.message || "Failed to delete property.",
+      message: errorMessage(error, "Failed to delete property."),
     };
   }
 }
@@ -138,12 +142,15 @@ export async function updateProperty(
       message: response.data?.message || "Property updated successfully.",
       data: response.data?.data,
     };
-  } catch (error: any) {
-    console.error("Update property error:", error?.response?.data || error);
+  } catch (error) {
+    console.error(
+      "Update property error:",
+      toApiError(error).response?.data || error,
+    );
 
     return {
       success: false,
-      message: error?.response?.data?.message || "Failed to update property.",
+      message: errorMessage(error, "Failed to update property."),
     };
   }
 }
@@ -183,12 +190,15 @@ export async function createProperty(data: {
       message: response.data?.message || "Property created successfully.",
       data: response.data?.data,
     };
-  } catch (error: any) {
-    console.error("Create property error:", error?.response?.data || error);
+  } catch (error) {
+    console.error(
+      "Create property error:",
+      toApiError(error).response?.data || error,
+    );
 
     return {
       success: false,
-      message: error?.response?.data?.message || "Failed to create property.",
+      message: errorMessage(error, "Failed to create property."),
     };
   }
 }
