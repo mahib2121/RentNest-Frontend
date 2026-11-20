@@ -2,6 +2,11 @@
 
 import { serverAxios } from "@/lib/serverAxios";
 import { errorMessage, toApiError } from "@/lib/apiError";
+import {
+  normalizeImages,
+  type PropertyImage,
+  type RawPropertyImage,
+} from "@/lib/propertyImages";
 
 export type LandlordProperty = {
   id: string;
@@ -37,6 +42,8 @@ export type LandlordProperty = {
     slug?: string;
     description?: string | null;
   };
+
+  images?: RawPropertyImage[];
 
   _count: {
     rentalRequests: number;
@@ -158,32 +165,27 @@ export async function updateProperty(
 // CREATE PROPERTY
 // ========================================
 
-export async function createProperty(data: {
-  categoryId: string;
-
-  title: string;
-  description: string;
-
-  rentPrice: number;
-
-  bedrooms: number;
-  bathrooms: number;
-  areaSqft: number;
-
-  address: string;
-  city: string;
-  division: string;
-  postalCode?: string;
-
-  latitude?: number;
-  longitude?: number;
-
-  availableFrom: string;
-}) {
+/**
+ * Creates a listing. Takes form-data so images can travel with it:
+ * `data` is the property fields as a JSON string and `images` are the files.
+ * Without images the fields are sent as a plain JSON body, as before.
+ */
+export async function createProperty(formData: FormData) {
   try {
     const api = await serverAxios();
 
-    const response = await api.post("/api/properties", data);
+    const images = getImageFiles(formData);
+    const data = JSON.parse(String(formData.get("data") ?? "{}"));
+
+    let body: FormData | Record<string, unknown> = data;
+
+    if (images.length > 0) {
+      body = new FormData();
+      body.append("data", JSON.stringify(data));
+      images.forEach((file) => (body as FormData).append("images", file));
+    }
+
+    const response = await api.post("/api/properties", body);
 
     return {
       success: true,
@@ -199,6 +201,127 @@ export async function createProperty(data: {
     return {
       success: false,
       message: errorMessage(error, "Failed to create property."),
+    };
+  }
+}
+
+// ========================================
+// PROPERTY IMAGES
+// ========================================
+
+function getImageFiles(formData: FormData): File[] {
+  return formData
+    .getAll("images")
+    .filter((value): value is File => value instanceof File && value.size > 0);
+}
+
+type ImageActionResult = {
+  success: boolean;
+  message: string;
+  images?: PropertyImage[];
+};
+
+/** Reads the image list out of whatever the image endpoints return. */
+function imagesFrom(payload: unknown): PropertyImage[] | undefined {
+  const data = (payload as { data?: unknown } | undefined)?.data;
+
+  if (Array.isArray(data)) return normalizeImages(data);
+
+  const images = (data as { images?: unknown } | undefined)?.images;
+
+  return Array.isArray(images) ? normalizeImages(images) : undefined;
+}
+
+export async function uploadPropertyImages(
+  propertyId: string,
+  formData: FormData,
+): Promise<ImageActionResult> {
+  try {
+    const files = getImageFiles(formData);
+
+    if (files.length === 0) {
+      return { success: false, message: "Choose at least one image." };
+    }
+
+    const body = new FormData();
+    files.forEach((file) => body.append("images", file));
+
+    const api = await serverAxios();
+    const response = await api.post(
+      `/api/properties/${propertyId}/images`,
+      body,
+    );
+
+    return {
+      success: true,
+      message: response.data?.message || "Images uploaded.",
+      images: imagesFrom(response.data),
+    };
+  } catch (error) {
+    console.error(
+      "Upload property images error:",
+      toApiError(error).response?.data || error,
+    );
+
+    return {
+      success: false,
+      message: errorMessage(error, "Failed to upload images."),
+    };
+  }
+}
+
+export async function setPropertyCoverImage(
+  propertyId: string,
+  imageId: string,
+): Promise<ImageActionResult> {
+  try {
+    const api = await serverAxios();
+    const response = await api.patch(
+      `/api/properties/${propertyId}/images/${imageId}/cover`,
+    );
+
+    return {
+      success: true,
+      message: response.data?.message || "Cover image updated.",
+      images: imagesFrom(response.data),
+    };
+  } catch (error) {
+    console.error(
+      "Set cover image error:",
+      toApiError(error).response?.data || error,
+    );
+
+    return {
+      success: false,
+      message: errorMessage(error, "Failed to set the cover image."),
+    };
+  }
+}
+
+export async function deletePropertyImage(
+  propertyId: string,
+  imageId: string,
+): Promise<ImageActionResult> {
+  try {
+    const api = await serverAxios();
+    const response = await api.delete(
+      `/api/properties/${propertyId}/images/${imageId}`,
+    );
+
+    return {
+      success: true,
+      message: response.data?.message || "Image deleted.",
+      images: imagesFrom(response.data),
+    };
+  } catch (error) {
+    console.error(
+      "Delete property image error:",
+      toApiError(error).response?.data || error,
+    );
+
+    return {
+      success: false,
+      message: errorMessage(error, "Failed to delete the image."),
     };
   }
 }

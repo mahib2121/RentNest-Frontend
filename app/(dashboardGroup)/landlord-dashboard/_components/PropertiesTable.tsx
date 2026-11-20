@@ -5,7 +5,12 @@ import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 
 import { VirtualTable } from "@/components/ui/virtual-table";
+import Image from "next/image";
+import { ImageOff } from "lucide-react";
+
+import { normalizeImages, type PropertyImage } from "@/lib/propertyImages";
 import EditPropertyDialog from "./EditPropertyDialog";
+import PropertyImagesDialog from "./PropertyImagesDialog";
 import type { LandlordProperty } from "../_actions.ts/landlordProperties";
 import { deleteProperty } from "../_actions.ts/landlordProperties";
 import { Category } from "../_actions.ts/categories";
@@ -60,6 +65,17 @@ export default function PropertiesTable({ properties, categories }: Props) {
     }
   }, []);
 
+  const handleImagesChange = useCallback(
+    (propertyId: string, images: PropertyImage[]) => {
+      setItems((current) =>
+        current.map((property) =>
+          property.id === propertyId ? { ...property, images } : property,
+        ),
+      );
+    },
+    [],
+  );
+
   if (items.length === 0) {
     return (
       <div className="rounded-sm border border-line bg-card p-6">
@@ -80,15 +96,35 @@ export default function PropertiesTable({ properties, categories }: Props) {
     {
       key: "property",
       label: "Property",
-      renderCell: (property: LandlordProperty) => (
-        <>
-          <p className="font-medium">{property.title}</p>
+      renderCell: (property: LandlordProperty) => {
+        const cover = normalizeImages(property.images)[0];
 
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {property.city}, {property.division}
-          </p>
-        </>
-      ),
+        return (
+          <div className="flex items-center gap-3">
+            <div className="relative h-10 w-14 shrink-0 overflow-hidden rounded-sm border border-line bg-secondary">
+              {cover ? (
+                <Image
+                  src={cover.url}
+                  alt=""
+                  fill
+                  sizes="56px"
+                  className="object-cover"
+                />
+              ) : (
+                <ImageOff className="absolute inset-0 m-auto h-4 w-4 text-muted-foreground" />
+              )}
+            </div>
+
+            <div className="min-w-0">
+              <p className="truncate font-medium">{property.title}</p>
+
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {property.city}, {property.division}
+              </p>
+            </div>
+          </div>
+        );
+      },
     },
     {
       key: "category",
@@ -158,10 +194,15 @@ export default function PropertiesTable({ properties, categories }: Props) {
     {
       key: "actions",
       label: "Actions",
-      width: "110px",
+      width: "150px",
       align: "right" as const,
       renderCell: (property: LandlordProperty) => (
         <div className="flex justify-end gap-1">
+          <PropertyImagesDialog
+            property={property}
+            onImagesChange={handleImagesChange}
+          />
+
           <EditPropertyDialog property={property} />
 
           <button

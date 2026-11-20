@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import BookingForm from "../../_components/BookingForm";
 import { StatusChip } from "../../../(dashboardGroup)/_components/StatusChip";
 import { getProperty } from "../../_actions/property";
+import { imageUrls } from "@/lib/propertyImages";
 
 type PageProps = {
   params: Promise<{
@@ -53,11 +54,7 @@ export default async function PropertyDetailsPage({ params }: PageProps) {
     notFound();
   }
 
-  const images = property.images?.length
-    ? property.images
-    : property.image
-      ? [property.image]
-      : [];
+  const images = imageUrls(property.images, property.image);
 
   const facts: { label: string; value: string }[] = [
     {

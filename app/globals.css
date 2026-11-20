@@ -106,6 +106,13 @@
   --color-status-rejected: var(--status-rejected);
   --color-status-neutral: var(--status-neutral);
 
+  /* Raised surfaces — without these, bg-card / bg-popover generate no CSS
+     and dropdowns, selects and dialogs render transparent. */
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

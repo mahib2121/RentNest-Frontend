@@ -24,7 +24,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+import { MAX_PROPERTY_IMAGES } from "@/lib/propertyImages";
+
 import { createProperty } from "../_actions.ts/landlordProperties";
+import ImageFilePicker from "./ImageFilePicker";
 
 type Category = {
   id: string;
@@ -50,6 +53,7 @@ type Props = {
 export default function AddPropertyDialog({ categories }: Props) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [images, setImages] = useState<File[]>([]);
 
   const formRef = useRef<HTMLFormElement>(null);
   const categoryInputRef = useRef<HTMLInputElement>(null);
@@ -83,8 +87,12 @@ export default function AddPropertyDialog({ categories }: Props) {
     try {
       setLoading(true);
 
-      const result = await createProperty({
-        categoryId,
+      const payload = new FormData();
+
+      payload.append(
+        "data",
+        JSON.stringify({
+          categoryId,
 
         title: String(data.get("title") ?? ""),
         description: String(data.get("description") ?? ""),
@@ -106,7 +114,12 @@ export default function AddPropertyDialog({ categories }: Props) {
         longitude: longitude !== "" ? Number(longitude) : undefined,
 
         availableFrom: new Date(`${availableFrom}T00:00:00.000Z`).toISOString(),
-      });
+        }),
+      );
+
+      images.forEach((file) => payload.append("images", file));
+
+      const result = await createProperty(payload);
 
       if (!result.success) {
         toast.error(result.message);
@@ -118,6 +131,7 @@ export default function AddPropertyDialog({ categories }: Props) {
       setOpen(false);
 
       form.reset();
+      setImages([]);
 
       window.location.reload();
     } catch (error) {
@@ -361,6 +375,19 @@ export default function AddPropertyDialog({ categories }: Props) {
                 type="date"
                 required
                 className="font-numeric"
+              />
+            </div>
+
+            {/* Photos — optional, sent with the listing as form-data. */}
+            <div className="space-y-1.5">
+              <Label htmlFor="images">Photos</Label>
+
+              <ImageFilePicker
+                id="images"
+                files={images}
+                onChange={setImages}
+                max={MAX_PROPERTY_IMAGES}
+                disabled={loading}
               />
             </div>
 

@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { cacheLife } from "next/cache";
 import { serverAxios } from "@/lib/serverAxios";
+import type { RawPropertyImage } from "@/lib/propertyImages";
 
 /**
  * The public listing data is cached for an hour.
@@ -64,7 +65,7 @@ export type Property = {
   availableFrom?: string;
   availabilityStatus?: string;
 
-  images?: string[];
+  images?: RawPropertyImage[];
   image?: string;
 
   category?: {

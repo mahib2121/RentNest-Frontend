@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
+import { imageUrls } from "@/lib/propertyImages";
 
 import type { Property } from "../_actions/property";
 
@@ -53,7 +54,7 @@ export function PropertyCard({
   className?: string;
   priority?: boolean;
 }) {
-  const image = property.images?.[0] ?? property.image ?? null;
+  const image = imageUrls(property.images, property.image)[0] ?? null;
 
   const availableFrom = formatDate(property.availableFrom);
 
