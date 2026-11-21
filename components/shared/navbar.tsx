@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { Button } from "../ui/button";
 import { AccountMenuLazy } from "./account-menu-lazy";
+import { NotificationBell } from "./notification-bell";
+import type { AppNotification } from "@/app/(dashboardGroup)/_actions/notifications";
 
 export type NavUser = {
   success: boolean;
@@ -44,7 +46,14 @@ const navItems = [
  * traffic — never downloads the radix dropdown, the Slot primitive, or the
  * toast runtime, because those only arrive with the signed-in branch.
  */
-export function Navbar({ user }: { user: NavUser }) {
+export function Navbar({
+  user,
+  notifications,
+}: {
+  user: NavUser;
+  /** Passed for landlords and tenants; renders the live notification bell. */
+  notifications?: AppNotification[];
+}) {
   const currentUser = user.data?.profile;
 
   const isSignedIn = Boolean(user.success && currentUser);
@@ -93,13 +102,23 @@ export function Navbar({ user }: { user: NavUser }) {
 
           {/* Right side */}
           {isSignedIn && currentUser ? (
-            <AccountMenuLazy
-              name={currentUser.name}
-              email={currentUser.email}
-              role={currentUser.role}
-              photo={currentUser.profile?.profilePhoto ?? null}
-              dashboardHref={dashboardHref}
-            />
+            <div className="flex items-center gap-3">
+              {notifications && (
+                <NotificationBell
+                  userId={currentUser.id}
+                  initialNotifications={notifications}
+                  href={dashboardHref}
+                />
+              )}
+
+              <AccountMenuLazy
+                name={currentUser.name}
+                email={currentUser.email}
+                role={currentUser.role}
+                photo={currentUser.profile?.profilePhoto ?? null}
+                dashboardHref={dashboardHref}
+              />
+            </div>
           ) : (
             <div className="flex items-center gap-2">
               <Button variant="ghost" asChild>

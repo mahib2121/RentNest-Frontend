@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/shared/navbar";
 import { getMe } from "@/service/getMe";
+import { getNotifications } from "./_actions/notifications";
 import DashboardSidebar from "../(dashboardGroup)/_components/sidebar";
 
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
@@ -9,9 +10,16 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
     return <>{children}</>;
   }
 
+  // Landlords (new requests) and tenants (approved / rejected) get the live
+  // notification bell, seeded with earlier ones.
+  const notifications =
+    profile.role === "LANDLORD" || profile.role === "TENANT"
+      ? (await getNotifications()).data
+      : undefined;
+
   return (
     <div className="min-h-screen bg-background">
-      <Navbar user={user} />
+      <Navbar user={user} notifications={notifications} />
 
       <div className="flex">
         <DashboardSidebar role={profile.role} />
