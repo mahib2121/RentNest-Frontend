@@ -1,7 +1,15 @@
 import { cache } from "react";
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { serverAxios } from "@/lib/serverAxios";
 import type { RawPropertyImage } from "@/lib/propertyImages";
+
+/**
+ * Cache tags for public listing data. The landlord Server Actions expire
+ * these after a successful write, so edits show up immediately instead of
+ * waiting out the cache lifetime.
+ */
+export const PROPERTIES_TAG = "properties";
+export const propertyTag = (id: string) => `property-${id}`;
 
 /**
  * The public listing data is cached for an hour.
@@ -17,16 +25,21 @@ import type { RawPropertyImage } from "@/lib/propertyImages";
 export const getPropertiesCached = cache(
   async (limit: number): Promise<Property[]> => {
     "use cache";
-    cacheLife("hours");
+    cacheTag(PROPERTIES_TAG);
 
     const api = await serverAxios({ withCookies: false });
 
     try {
       const response = await api.get("/api/properties", { params: { limit } });
 
+      cacheLife("hours");
+
       return readList(response.data as PropertiesResponse);
     } catch (error) {
       console.error("Failed to load properties:", error);
+
+      // Don't keep an empty listing page for an hour after a backend hiccup.
+      cacheLife("seconds");
 
       return [];
     }
@@ -309,16 +322,31 @@ export async function getMarketPulse(): Promise<MarketPulse> {
   };
 }
 
-/** A single listing, or null when it does not exist. */
+/**
+ * A single listing, or null when it does not exist.
+ *
+ * Cached like the list, and tagged both with the shared listings tag and its
+ * own tag, so an edit to this property expires it. The endpoint is public,
+ * so no session cookie is sent — `cookies()` is not allowed inside
+ * `"use cache"` anyway.
+ */
 export async function getProperty(id: string): Promise<Property | null> {
-  const api = await serverAxios();
+  "use cache";
+  cacheTag(PROPERTIES_TAG, propertyTag(id));
+
+  const api = await serverAxios({ withCookies: false });
 
   try {
     const response = await api.get(`/api/properties/${id}`);
 
+    cacheLife("hours");
+
     return (response.data as { data?: Property })?.data ?? null;
   } catch (error) {
     console.error(`Failed to load property ${id}:`, error);
+
+    // Don't let a backend hiccup pin a 404 on the page for an hour.
+    cacheLife("seconds");
 
     return null;
   }

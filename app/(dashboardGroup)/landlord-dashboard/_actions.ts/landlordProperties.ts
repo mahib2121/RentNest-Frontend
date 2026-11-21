@@ -1,5 +1,7 @@
 "use server";
 
+import { updateTag } from "next/cache";
+
 import { serverAxios } from "@/lib/serverAxios";
 import { errorMessage, toApiError } from "@/lib/apiError";
 import {
@@ -7,6 +9,23 @@ import {
   type PropertyImage,
   type RawPropertyImage,
 } from "@/lib/propertyImages";
+import {
+  PROPERTIES_TAG,
+  propertyTag,
+} from "@/app/(publicGroup)/_actions/property";
+
+/**
+ * Expire the cached public listings after a successful write, so the home
+ * page, /properties and the detail page show the change on the next request.
+ * Called only after the backend accepted the change.
+ */
+function invalidateListing(propertyId?: string) {
+  updateTag(PROPERTIES_TAG);
+
+  if (propertyId) {
+    updateTag(propertyTag(propertyId));
+  }
+}
 
 export type LandlordProperty = {
   id: string;
@@ -93,6 +112,8 @@ export async function deleteProperty(propertyId: string) {
 
     const response = await api.delete(`/api/properties/${propertyId}`);
 
+    invalidateListing(propertyId);
+
     return {
       success: true,
       message: response.data?.message || "Property deleted successfully.",
@@ -144,6 +165,8 @@ export async function updateProperty(
 
     const response = await api.patch(`/api/properties/${propertyId}`, data);
 
+    invalidateListing(propertyId);
+
     return {
       success: true,
       message: response.data?.message || "Property updated successfully.",
@@ -186,6 +209,8 @@ export async function createProperty(formData: FormData) {
     }
 
     const response = await api.post("/api/properties", body);
+
+    invalidateListing();
 
     return {
       success: true,
@@ -252,6 +277,8 @@ export async function uploadPropertyImages(
       body,
     );
 
+    invalidateListing(propertyId);
+
     return {
       success: true,
       message: response.data?.message || "Images uploaded.",
@@ -280,6 +307,8 @@ export async function setPropertyCoverImage(
       `/api/properties/${propertyId}/images/${imageId}/cover`,
     );
 
+    invalidateListing(propertyId);
+
     return {
       success: true,
       message: response.data?.message || "Cover image updated.",
@@ -307,6 +336,8 @@ export async function deletePropertyImage(
     const response = await api.delete(
       `/api/properties/${propertyId}/images/${imageId}`,
     );
+
+    invalidateListing(propertyId);
 
     return {
       success: true,
