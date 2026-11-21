@@ -19,8 +19,8 @@ import {
   type AppNotification,
 } from "@/app/(dashboardGroup)/_actions/notifications";
 
-const PUSHER_KEY = process.env.NEXT_PUBLIC_PUSHER_KEY;
-const PUSHER_CLUSTER = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
+const PUSHER_KEY = process.env.PUSHER_KEY;
+const PUSHER_CLUSTER = process.env.PUSHER_CLUSTER;
 
 /**
  * Live notifications for the signed-in landlord or tenant.
